@@ -1,0 +1,10 @@
+rag_data/*
+chroma_db/*
+
+.vscode/*
+personal/*
+.env
+
+# Python
+__pycache__/
+*.pyc
