@@ -2,12 +2,21 @@ from transformers import AutoTokenizer
 from transformers import AutoModelForCausalLM
 from peft import PeftModel
 from transformers import pipeline
+from app.llm.openai_model import get_openai_model
 
 from langchain_huggingface import HuggingFacePipeline
 
+ADAPTER_MAPPING = {
+    "thinking": "adapters/qwen3-0.6B-thinking",
+    "coding": "adapters/qwen3-0.6B-coding"
+}
 
-def get_qwen_model(adapter_path: str = None):
+DISABLE = True
 
+def get_qwen_model(name: str = None):
+    if DISABLE:
+        return get_openai_model()
+    
     model_name = "Qwen/Qwen3-0.6B"
 
     tokenizer = AutoTokenizer.from_pretrained(
@@ -19,10 +28,10 @@ def get_qwen_model(adapter_path: str = None):
         device_map="auto"
     )
 
-    if adapter_path:
+    if name and name in ADAPTER_MAPPING:
         model = PeftModel.from_pretrained(
             model,
-            adapter_path
+            ADAPTER_MAPPING[name]
         )
 
     pipe = pipeline(
@@ -35,4 +44,6 @@ def get_qwen_model(adapter_path: str = None):
     return HuggingFacePipeline(
         pipeline=pipe
     )
+
+
 

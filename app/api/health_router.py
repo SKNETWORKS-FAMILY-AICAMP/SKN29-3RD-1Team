@@ -1,8 +1,9 @@
 # health check router
 from fastapi import APIRouter
 from app.rag.retriever import get_retriever
-from app.agent.solver_chain import chain
+from app.llm.openai_model import get_openai_model
 from app.llm.qwen_model import get_qwen_model
+from app.agent.solve_agent import solve_graph
 
 
 router = APIRouter(prefix="/health", tags=["health"])
@@ -26,7 +27,7 @@ def rag_health_check():
 
 @router.get("/chat")
 def chat(request: str):
-    response = chain.invoke({"question": request})
+    response = get_openai_model().invoke(request)
 
     return {
         "answer": response.content
@@ -35,11 +36,18 @@ def chat(request: str):
 @router.get("/qwen")
 def qwen_chat(request: str):
     llm = get_qwen_model()
-    
+
     print("question:", request)
     response = llm.invoke(request)
     print("Qwen response:", response)
 
     return {
         "answer": response
+    }
+
+@router.get("/solve")
+def solve_problem(request: str):
+    response = solve_graph.invoke({"problem": request})
+    return {
+        "answer": response["final_answer"]
     }
