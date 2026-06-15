@@ -7,18 +7,6 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tupl
 
 from app.rag.vector_store import get_vector_store
 
-
-# =============================================================================
-# Retrieval V1.1
-# -----------------------------------------------------------------------------
-# 개선 목표
-# 1) 여러 함수에 흩어진 하드코딩 룰을 ALGORITHM_ALIASES + RULE_PATTERNS로 단순화
-# 2) 룰 결과를 무조건 metadata hard-filter로 쓰지 않고 query expansion/soft routing에 활용
-# 3) 룰/검색 실패를 명시적으로 정의하고, 실패 시 query rewrite fallback 수행
-# 4) 기존 retrieve_v1(), print_retrieval_result() 인터페이스는 유지
-# =============================================================================
-
-
 # 프로젝트 metadata의 algorithm_key 기준 alias/동의어 사전.
 # 역할: 사용자가 알고리즘명을 직접 말하지 않아도 후보 알고리즘을 추론한다.
 ALGORITHM_ALIASES: Dict[str, List[str]] = {
