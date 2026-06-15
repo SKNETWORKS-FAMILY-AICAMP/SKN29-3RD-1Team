@@ -176,16 +176,111 @@ def extract_graph_metadata(text: str, doc_meta: Dict[str, Any]) -> Dict[str, str
 def infer_metadata_from_path(metadata: Dict[str, Any], text: str = "") -> Dict[str, str]:
     """
     # 메타데이터 JSON이 비어 있는 문서 보정용.
-    고급 알고리즘 문서처럼 algorithm/category가 누락된 경우
-    filename/source/본문 키워드를 기반으로 최소 메타데이터를 채운다.
-    """
-    raw = " ".join([
-        str(metadata.get("filename", "")),
-        str(metadata.get("source", "")),
-        text[:500],
-    ]).lower()
 
+    중요 원칙:
+    - algorithm은 파일명/경로/명시 metadata 중심으로만 추론한다.
+    - 본문 키워드는 related_topics 보강에는 사용할 수 있지만 algorithm 결정에는 사용하지 않는다.
+    - 예: PriorityQueue 문서 안에 "다익스트라"가 있어도 algorithm은 다익스트라가 아니라 우선순위 큐여야 한다.
+    """
+    path_raw = " ".join([
+        str(metadata.get("filename", "")),
+        str(metadata.get("source_file", "")),
+        str(metadata.get("source", "")),
+        str(metadata.get("source_path", "")),
+        str(metadata.get("category", "")),
+    ]).lower()
+    compact = _safe_lower(path_raw)
+
+    # 더 구체적인 파일명/경로 규칙을 먼저 둔다.
     rules = [
+        {
+            "keys": ["priorityqueue", "priority_queue", "우선순위큐", "우선순위 큐"],
+            "algorithm": "우선순위 큐",
+            "category": metadata.get("category", "자료구조") or "자료구조",
+            "difficulty": metadata.get("difficulty", metadata.get("target_level", "beginner")) or "beginner",
+            "related_topics": ["힙", "큐", "다익스트라"],
+            "prerequisites": ["queue", "heap"],
+        },
+        {
+            "keys": ["heapq", "heap_complete", "heap", "힙"],
+            "algorithm": "힙",
+            "category": metadata.get("category", "자료구조") or "자료구조",
+            "difficulty": metadata.get("difficulty", metadata.get("target_level", "mid")) or "mid",
+            "related_topics": ["우선순위 큐", "완전이진트리", "정렬", "다익스트라"],
+            "prerequisites": ["tree"],
+        },
+        {
+            "keys": ["queue", "큐_generated", "큐.md", "queue_ai"],
+            "algorithm": "큐",
+            "category": metadata.get("category", "자료구조") or "자료구조",
+            "difficulty": metadata.get("difficulty", metadata.get("target_level", "beginner")) or "beginner",
+            "related_topics": ["BFS", "Deque", "스택"],
+            "prerequisites": [],
+        },
+        {
+            "keys": ["deque", "덱"],
+            "algorithm": "덱",
+            "category": metadata.get("category", "자료구조") or "자료구조",
+            "difficulty": metadata.get("difficulty", metadata.get("target_level", "beginner")) or "beginner",
+            "related_topics": ["큐", "스택"],
+            "prerequisites": ["queue"],
+        },
+        {
+            "keys": ["stack", "스택"],
+            "algorithm": "스택",
+            "category": metadata.get("category", "자료구조") or "자료구조",
+            "difficulty": metadata.get("difficulty", metadata.get("target_level", "beginner")) or "beginner",
+            "related_topics": ["DFS", "큐"],
+            "prerequisites": [],
+        },
+        {
+            "keys": ["병합정렬", "병합_정렬", "merge_sort", "mergesort"],
+            "algorithm": "병합 정렬",
+            "category": "정렬",
+            "difficulty": metadata.get("difficulty", metadata.get("target_level", "beginner")) or "beginner",
+            "related_topics": ["정렬", "분할정복"],
+            "prerequisites": ["recursion"],
+        },
+        {
+            "keys": ["선택정렬", "선택_정렬", "selection_sort", "selectionsort"],
+            "algorithm": "선택 정렬",
+            "category": "정렬",
+            "difficulty": metadata.get("difficulty", metadata.get("target_level", "beginner")) or "beginner",
+            "related_topics": ["정렬"],
+            "prerequisites": [],
+        },
+        {
+            "keys": ["버블정렬", "버블_정렬", "bubble_sort", "bubblesort"],
+            "algorithm": "버블 정렬",
+            "category": "정렬",
+            "difficulty": metadata.get("difficulty", metadata.get("target_level", "beginner")) or "beginner",
+            "related_topics": ["정렬"],
+            "prerequisites": [],
+        },
+        {
+            "keys": ["삽입정렬", "삽입_정렬", "insertion_sort", "insertionsort"],
+            "algorithm": "삽입 정렬",
+            "category": "정렬",
+            "difficulty": metadata.get("difficulty", metadata.get("target_level", "beginner")) or "beginner",
+            "related_topics": ["정렬"],
+            "prerequisites": [],
+        },
+        {
+            "keys": ["퀵정렬", "퀵_정렬", "quick_sort", "quicksort"],
+            "algorithm": "퀵 정렬",
+            "category": "정렬",
+            "difficulty": metadata.get("difficulty", metadata.get("target_level", "beginner")) or "beginner",
+            "related_topics": ["정렬", "분할정복"],
+            "prerequisites": ["recursion"],
+        },
+        {
+            "keys": ["정렬", "sort", "sorting"],
+            "algorithm": "정렬",
+            "category": "정렬",
+            "difficulty": metadata.get("difficulty", metadata.get("target_level", "beginner")) or "beginner",
+            "related_topics": ["정렬"],
+            "prerequisites": [],
+        },
         {
             "keys": ["dijkstra", "다익스트라"],
             "algorithm": "다익스트라",
@@ -245,24 +340,23 @@ def infer_metadata_from_path(metadata: Dict[str, Any], text: str = "") -> Dict[s
     ]
 
     for rule in rules:
-        if any(k.lower() in raw for k in rule["keys"]):
+        if any(_safe_lower(k) in compact for k in rule["keys"]):
             return {
                 "algorithm": rule["algorithm"],
                 "category": rule["category"],
                 "difficulty": rule["difficulty"],
                 "related_topics": _meta_json_string(rule["related_topics"]),
                 "prerequisites": _meta_json_string(rule["prerequisites"]),
-                "source_type": "curated",
+                "source_type": "curated" if "고급" in path_raw else str(metadata.get("source_type") or "generated"),
                 "content_type": "explanation",
-                "style": "hard",
-                "quality_score": "8.5",
+                "style": "hard" if "고급" in path_raw else "easy, code, theory",
+                "quality_score": "8.5" if "고급" in path_raw else "8.0",
                 "verified": "true",
                 "use_for_rag": "true",
-                "retrieval_priority": "1",
+                "retrieval_priority": "1" if "고급" in path_raw else "2",
             }
 
     return {}
-
 
 # ============================================================
 # 5-2. 메타데이터 표준화 / 기본값 보강
@@ -274,29 +368,41 @@ def _safe_lower(value: Any) -> str:
 def canonicalize_algorithm(value: str, filename: str = "", source: str = "", text: str = "") -> Dict[str, str]:
     """
     검색/필터링 안정성을 위해 알고리즘 표기를 표준화한다.
-    - algorithm: 사용자에게 보여줄 한글/도메인명
-    - algorithm_key: 필터링용 canonical key
-    - display_name: 출력용 이름
-    """
-    raw = " ".join([value or "", filename or "", source or "", text[:300] or ""])
-    compact = _safe_lower(raw)
 
+    오분류 방지 원칙:
+    - value가 있으면 value를 최우선으로 본다.
+    - filename/source는 보조 신호로만 사용한다.
+    - 본문 text는 algorithm 결정에 사용하지 않는다.
+      본문에 관련 알고리즘명이 등장한다고 원본문서의 algorithm을 바꾸면 안 된다.
+    """
+    value_compact = _safe_lower(value)
+    path_compact = _safe_lower(" ".join([filename or "", source or ""]))
+    compact = value_compact or path_compact
+
+    # 구체적인 자료구조/정렬/알고리즘을 broad rule보다 먼저 둔다.
     rules = [
+        ("priority_queue", "우선순위 큐", ["priorityqueue", "priority_queue", "우선순위큐", "우선순위 큐"]),
+        ("heap", "힙", ["heapq", "heap", "힙"]),
+        ("deque", "덱", ["deque", "덱"]),
+        ("queue", "큐", ["queue", "큐"]),
+        ("stack", "스택", ["stack", "스택"]),
+        ("merge_sort", "병합 정렬", ["mergesort", "merge_sort", "병합정렬", "병합_정렬", "병합 정렬"]),
+        ("selection_sort", "선택 정렬", ["selectionsort", "selection_sort", "선택정렬", "선택_정렬", "선택 정렬"]),
+        ("bubble_sort", "버블 정렬", ["bubblesort", "bubble_sort", "버블정렬", "버블_정렬", "버블 정렬"]),
+        ("insertion_sort", "삽입 정렬", ["insertionsort", "insertion_sort", "삽입정렬", "삽입_정렬", "삽입 정렬"]),
+        ("quick_sort", "퀵 정렬", ["quicksort", "quick_sort", "퀵정렬", "퀵_정렬", "퀵 정렬"]),
+        ("sort", "정렬", ["sort", "sorting", "정렬"]),
         ("dijkstra", "다익스트라", ["dijkstra", "다익스트라"]),
         ("bellman_ford", "벨만포드", ["bellman", "벨만포드", "벨만-포드"]),
         ("floyd_warshall", "플로이드워셜", ["floyd", "warshall", "플로이드", "워셜"]),
         ("bfs", "BFS", ["bfs", "너비우선탐색"]),
         ("dfs", "DFS", ["dfs", "깊이우선탐색"]),
-        ("dp", "DP", ["dynamicprogramming", "동적계획", "dp_complete", "dp"]),
+        ("dp", "DP", ["dynamicprogramming", "동적계획", "dpcomplete", "dp"]),
         ("binary_search", "이분탐색", ["binarysearch", "이분탐색", "lowerbound", "upperbound", "parametricsearch"]),
-        ("heap", "힙", ["heap", "heapq", "priorityqueue", "우선순위큐", "우선순위 큐", "힙"]),
         ("backtracking", "백트래킹", ["backtracking", "백트래킹"]),
         ("bruteforce", "완전탐색", ["bruteforce", "완전탐색", "브루트포스"]),
         ("greedy", "그리디", ["greedy", "그리디", "탐욕"]),
         ("hash", "해시", ["hashmap", "hashset", "hash", "해시"]),
-        ("stack", "스택", ["stack", "스택"]),
-        ("queue", "큐", ["queue", "deque", "큐", "덱"]),
-        ("sort", "정렬", ["sort", "sorting", "정렬", "퀵정렬", "병합정렬", "삽입정렬", "버블정렬", "선택정렬"]),
         ("trie", "트라이", ["trie", "트라이"]),
         ("segment_tree", "세그먼트 트리", ["segmenttree", "세그먼트트리", "세그먼트 트리"]),
         ("topological_sort", "위상정렬", ["topological", "위상정렬", "위상 정렬"]),
@@ -304,13 +410,13 @@ def canonicalize_algorithm(value: str, filename: str = "", source: str = "", tex
         ("mst", "최소 신장 트리", ["kruskal", "prim", "크루스칼", "프림", "최소신장트리", "mst"]),
         ("bitmask", "비트마스킹", ["bitmask", "비트마스킹", "비트 마스킹"]),
     ]
+
     for key, display, aliases in rules:
         if any(_safe_lower(alias) in compact for alias in aliases):
             return {"algorithm": display, "algorithm_key": key, "display_name": display}
 
     cleaned = str(value or "").strip()
     return {"algorithm": cleaned, "algorithm_key": _safe_lower(cleaned), "display_name": cleaned}
-
 
 def _json_list(value: Any) -> List[str]:
     if not value:
@@ -780,12 +886,14 @@ def split_md_smart(
     inferred_meta = infer_metadata_from_path(metadata, cleaned)
     trace_meta = build_document_trace_metadata(metadata, cleaned)
 
+    # algorithm 결정은 명시 metadata 또는 파일명/경로 기반 추론만 사용한다.
+    # 본문 키워드는 related_topics에는 쓰지만 algorithm override에는 쓰지 않는다.
     raw_algorithm = graph_meta.get("algorithm") or inferred_meta.get("algorithm") or metadata.get("algorithm", "")
     canonical = canonicalize_algorithm(
         raw_algorithm,
         filename=str(metadata.get("filename", "")),
         source=str(metadata.get("source", "")),
-        text=cleaned,
+        text="",
     )
 
     base_source_type = _meta_value(doc_meta, ["source_type"], inferred_meta.get("source_type", metadata.get("source_type", "generated")))

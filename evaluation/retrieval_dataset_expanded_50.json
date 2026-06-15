@@ -1,0 +1,400 @@
+[
+  {
+    "query": "힙은 언제 사용하나요?",
+    "expected": [
+      "heap",
+      "priority_queue"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "우선순위 큐 구현 방법 알려줘",
+    "expected": [
+      "priority_queue",
+      "heap"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "우선순위 큐와 일반 큐 차이 설명해줘",
+    "expected": [
+      "priority_queue",
+      "heap",
+      "queue"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "DFS와 BFS 차이는?",
+    "expected": [
+      "dfs",
+      "bfs"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "DFS는 언제 사용하나요?",
+    "expected": [
+      "dfs"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "BFS 최단거리 문제 풀이 방법 알려줘",
+    "expected": [
+      "bfs"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "이분탐색은 어떤 조건에서 쓰나요?",
+    "expected": [
+      "binary_search"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "lower bound와 upper bound 설명해줘",
+    "expected": [
+      "binary_search"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "parametric search가 뭐야?",
+    "expected": [
+      "binary_search"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "DP는 언제 사용하나요?",
+    "expected": [
+      "dp"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "DP 점화식 세우는 방법 알려줘",
+    "expected": [
+      "dp"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "백트래킹은 DFS와 뭐가 다른가요?",
+    "expected": [
+      "backtracking",
+      "dfs"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "백트래킹 문제는 어떻게 풀어?",
+    "expected": [
+      "backtracking"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "다익스트라 알고리즘은 언제 쓰나요?",
+    "expected": [
+      "dijkstra",
+      "priority_queue",
+      "graph"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "가중치 그래프 최단경로는 어떤 알고리즘을 써?",
+    "expected": [
+      "dijkstra",
+      "bellman_ford",
+      "floyd_warshall",
+      "graph"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "시간복잡도 O(log n)은 무슨 뜻인가요?",
+    "expected": [
+      "time_complexity",
+      "binary_search",
+      "sort",
+      "heap"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "O(n log n) 시간복잡도는 어떤 의미야?",
+    "expected": [
+      "time_complexity",
+      "sort"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "공간복잡도는 무엇인가요?",
+    "expected": [
+      "time_complexity"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "그리디는 언제 쓰나요?",
+    "expected": [
+      "greedy"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "스택은 어떤 문제에서 사용하나요?",
+    "expected": [
+      "stack"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "큐 자료구조 구현 방법 알려줘",
+    "expected": [
+      "queue"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "덱은 어디에 사용하나요?",
+    "expected": [
+      "deque"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "해시 테이블은 언제 사용해?",
+    "expected": [
+      "hash"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "정렬 알고리즘 종류 알려줘",
+    "expected": [
+      "sort",
+      "selection_sort",
+      "bubble_sort",
+      "insertion_sort",
+      "merge_sort",
+      "quick_sort"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "병합 정렬 시간복잡도 알려줘",
+    "expected": [
+      "merge_sort",
+      "sort",
+      "time_complexity"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "퀵 정렬 설명해줘",
+    "expected": [
+      "quick_sort",
+      "sort"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "버블 정렬 설명해줘",
+    "expected": [
+      "bubble_sort",
+      "sort"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "벨만포드 알고리즘 설명해줘",
+    "expected": [
+      "bellman_ford"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "플로이드 워셜 알고리즘 설명해줘",
+    "expected": [
+      "floyd_warshall"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "유니온 파인드 설명해줘",
+    "expected": [
+      "union_find"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "세그먼트 트리 설명해줘",
+    "expected": [
+      "segment_tree"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "트라이 자료구조는 언제 사용해?",
+    "expected": [
+      "trie"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "비트마스킹 문제 풀이 방법 알려줘",
+    "expected": [
+      "bitmask"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "MST는 어떤 알고리즘인가요?",
+    "expected": [
+      "mst",
+      "union_find",
+      "graph"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "크루스칼 알고리즘 설명해줘",
+    "expected": [
+      "mst",
+      "union_find"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "해시와 딕셔너리 차이를 알려줘",
+    "expected": [
+      "hash",
+      "딕셔너리"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "리스트와 배열은 언제 사용해?",
+    "expected": [
+      "파이썬리스트",
+      "java배열",
+      "c/cpp배열"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "재귀 함수는 어떤 문제에서 사용하나요?",
+    "expected": [
+      "c/cpp재귀함수",
+      "java재귀",
+      "dfs",
+      "backtracking"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "순열 조합 문제는 어떻게 접근해?",
+    "expected": [
+      "순열,조합",
+      "backtracking"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "완전탐색은 언제 사용하나요?",
+    "expected": [
+      "bruteforce",
+      "backtracking"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "동전 문제는 어떤 알고리즘으로 풀어?",
+    "expected": [
+      "동전문제",
+      "greedy",
+      "dp"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "회의실 배정 문제 풀이 알려줘",
+    "expected": [
+      "회의실배정",
+      "greedy"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "올바른 괄호 문제는 어떤 자료구조야?",
+    "expected": [
+      "올바른괄호",
+      "stack"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "후위표기식 계산은 어떤 자료구조를 써?",
+    "expected": [
+      "후위표기식",
+      "stack"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "삽입 정렬 설명해줘",
+    "expected": [
+      "insertion_sort",
+      "sort"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "선택 정렬 설명해줘",
+    "expected": [
+      "selection_sort",
+      "sort"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "그래프 자료구조 설명해줘",
+    "expected": [
+      "graph",
+      "dfs",
+      "bfs"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "collections 라이브러리 언제 써?",
+    "expected": [
+      "파이썬collections",
+      "deque",
+      "queue"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "itertools 라이브러리로 순열 조합 만들기",
+    "expected": [
+      "파이썬itertools",
+      "순열,조합"
+    ],
+    "type": "basic"
+  },
+  {
+    "query": "StringBuilder는 코딩테스트에서 왜 써?",
+    "expected": [
+      "javastringbuilder",
+      "java문자열"
+    ],
+    "type": "basic"
+  }
+]
