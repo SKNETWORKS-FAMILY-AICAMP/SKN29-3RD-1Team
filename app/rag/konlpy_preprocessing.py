@@ -1,15 +1,3 @@
-"""
-KoNLPy 기반 한국어 전처리 유틸리티
-
-목적
-- 평가표의 '정규표현식 + KoNLPy 형태소 분석 + 불용어 처리' 항목 대응
-- 기존 Retrieval V1 성능을 건드리지 않고, 전처리/TF-IDF baseline에서 재사용
-
-주의
-- KoNLPy가 설치되어 있지 않으면 regex 기반 fallback 토크나이저로 동작한다.
-- 현재 Retrieval V1(Dense Retrieval)에는 영향을 주지 않는다.
-"""
-
 from __future__ import annotations
 
 import re
