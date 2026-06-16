@@ -18,14 +18,9 @@ ENABLE_LOCAL_MODEL = os.getenv(
     "False"
 ).lower() == "true"
 
-logging.basicConfig(
-    level=getattr(logging, LOG_LEVEL),
-    format=(
-        "%(asctime)s "
-        "[%(levelname)s] "
-        "%(name)s - "
-        "%(message)s"
-    ),
+QWEN_MODEL_NAME = os.getenv(
+    "QWEN_MODEL_NAME",
+    "Qwen/Qwen3-0.6B"
 )
 
 CHROMA_PERSIST_DIR = os.getenv(
@@ -39,3 +34,8 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger("app")
+
+def get_llm_setting_string():
+    if ENABLE_LOCAL_MODEL:
+        return QWEN_MODEL_NAME + "_" + OPENAI_MODEL
+    return OPENAI_MODEL

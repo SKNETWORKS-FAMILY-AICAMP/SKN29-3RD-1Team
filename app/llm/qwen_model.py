@@ -3,7 +3,7 @@ from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
 from app.llm.openai_model import get_openai_model
-from app.config import ENABLE_LOCAL_MODEL
+from app.config import ENABLE_LOCAL_MODEL, QWEN_MODEL_NAME
 from langchain_huggingface import HuggingFacePipeline
 
 ADAPTER_MAPPING = {
@@ -16,12 +16,10 @@ ADAPTER_MAPPING = {
 def get_qwen_model(name: str = None):
     if not ENABLE_LOCAL_MODEL:
         return get_openai_model()
-
-    model_name = "Qwen/Qwen3-0.6B"
     
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    tokenizer = AutoTokenizer.from_pretrained(QWEN_MODEL_NAME)
     model = AutoModelForCausalLM.from_pretrained(
-        model_name,
+        QWEN_MODEL_NAME,
         device_map="auto",
     )
 
