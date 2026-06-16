@@ -359,6 +359,21 @@ split_adapters_tuning_2/
 
 ## 실험 설정 기록
 
+### 1차 실험 (Qwen2.5-0.5B | 김정민)
+ 
+| 항목 | 내용 |
+|------|------|
+| 베이스 모델 | `Qwen/Qwen2.5-0.5B-Instruct` |
+| 학습 데이터 | `train_sft_merged.jsonl` (11,480개, 한국어 사고과정 형식) |
+| 평가 스크립트 | `base_eval.py` 직접 작성 |
+| 평가 항목 | 형식 준수율 / 코드 블록 포함률 / 코드 문법 통과율 |
+| 형식 준수율 | 0~15% (프롬프트 개선 전/후) |
+| 코드 블록 포함률 | 85~100% (정답 코드 바로 생성하는 문제 확인) |
+| 코드 문법 통과율 | 80~100% |
+| 결론 | 0.5B 경량 모델의 한계 확인, LoRA 튜닝 필요성 수립 |
+ 
+### 2차 실험 — (Qwen2.5-3B | 김재홍)
+ 
 | 항목 | 베이스 평가 | LoRA v1 | LoRA v2 |
 |------|------------|---------|---------|
 | 모델 | Qwen2.5-3B-Instruct | 동일 + LoRA adapter | 동일 + LoRA adapter v2 |
@@ -370,7 +385,7 @@ split_adapters_tuning_2/
 | 평가 샘플 수 | 30 | 30 | 30 |
 | 결과 폴더 | base_eval_split/ | lora_eval_split/ | lora_eval_split_tuning_2/ |
 | adapter | — | split_adapters.zip | split_adapters_tuning_2.zip |
-
+ 
 ---
 
 ## 주의사항
