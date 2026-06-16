@@ -266,6 +266,7 @@ conda activate skn3rd
 
 ```env
 OPENAI_API_KEY=sk-...
+ENABLE_LOCAL_MODEL=True # False
 ```
 
 ### 3. 데이터 Ingestion (RAG 검색용 ChromaDB 구축)
@@ -296,7 +297,12 @@ http://localhost:8000/docs
 GET /health/solve?request=두 수의 합이 target이 되는 두 인덱스를 찾아라.
 ```
 
-### 6. RAG 성능 평가 (선택)
+### 6. 시연용 Streamlit 실행
+```
+python -m streamlit run preview_app.py
+```
+
+### 7. RAG 성능 평가 (선택)
 
 ```bash
 # Basic 50 평가
