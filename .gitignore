@@ -8,3 +8,7 @@ personal/*
 # Python
 __pycache__/
 *.pyc
+
+# 모델링 관련
+app/scripts/outputs/
+app/data/
