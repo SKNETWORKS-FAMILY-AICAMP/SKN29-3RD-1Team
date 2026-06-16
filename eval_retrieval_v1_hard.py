@@ -1,12 +1,3 @@
-"""Retrieval V1 hard-query evaluation script.
-
-Default: expanded 50-case hard dataset
-Usage:
-    python eval_retrieval_v1_hard.py
-    python eval_retrieval_v1_hard.py evaluation/retrieval_hard_dataset.json
-    python eval_retrieval_v1_hard.py evaluation/retrieval_hard_dataset_expanded_50.json
-"""
-
 from __future__ import annotations
 
 import json
