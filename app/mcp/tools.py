@@ -24,8 +24,12 @@ def execute_python(
     try:
         sys.stdin = io.StringIO(stdin)
 
+        exec_globals = {
+            "__name__": "__main__"
+        }
+
         with redirect_stdout(buffer):
-            exec(code, {})
+            exec(code, exec_globals)
 
         return buffer.getvalue()
 
