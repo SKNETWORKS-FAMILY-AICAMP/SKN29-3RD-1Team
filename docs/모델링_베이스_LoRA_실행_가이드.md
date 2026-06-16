@@ -1,9 +1,9 @@
-# 모델링 베이스 LoRA 결과 보고서
+# 모델링 베이스 LoRA 실행 가이드
 > Qwen2.5 베이스 모델 평가 → LoRA 튜닝 → LoRA 평가 전체 파이프라인 정리
 
-## 담당자
+#### 담당자
 - 김재홍
-- 김정민 
+- 김정민
 
 ---
 
@@ -73,11 +73,10 @@ GPT 계열 모델이 생성한 `<think>` 태그 기반 추론 과정 및 Python 
 
 `train_qwen_adapter.py`는 원본 데이터를 그대로 쓰지 않고 아래 방식으로 변환하여 학습한다.
 
-1. `output` 필드에서 ` ``` python ... ``` ` 코드블록 추출
+1. `output` 필드에서 ` ```python ... ``` ` 코드블록 추출
 2. 문제 텍스트 + 코드 분석으로 ALLOWED_VOCAB 기반 키워드 6개 자동 선택
 3. `<think>` 태그 내용을 추출하여 5개 항목 Thinking Process로 변환 (v2 개선 사항)
 4. keyword / thinking / code 태스크별 학습 샘플로 분리 → 최대 **12,000개** 학습 샘플 생성
-
 
 ---
 
@@ -134,7 +133,8 @@ app/
 ```
 
 > ⚠️ **주의**: `evaluate_lora_*.py`가 `evaluate_base_*.py`를 직접 import하므로  
-> 두 파일 그룹을 서로 다른 폴더로 분리하면 import 오류가 발생한다. 반드시 같은 폴더에 두어야 한다.
+> 두 파일 그룹을 서로 다른 폴더로 분리하면 import 오류가 발생한다. 반드시 같은 폴더에 두어야 한다.  
+> split_adapters 용량 제한으로 zip 파일로 대체하였으며, 실제 실행 시에는 압축을 풀어서 사용한다.
 
 ---
 
@@ -161,7 +161,7 @@ app/
 | `evaluate_base_keyword.py` | RAG 키워드 6개 생성 능력 평가. ALLOWED_VOCAB 일치율, snake_case, 중복 여부 검사 |
 | `evaluate_base_thinking.py` | Thinking Process 5개 항목 생성 능력 평가. 라벨 정확도, 영어 여부, 불필요 섹션 포함 여부 검사 |
 | `evaluate_base_code.py` | Final Answer 코드 생성 능력 평가. 문법 통과율, 코드블록 형식, placeholder 포함 여부 검사 |
-| `evaluate_base_full.py` | keyword / thinking / code 결과를 조합하여 전체 응답 품질 평가. 위 세 파일 실행 후 실행 |
+| `evaluate_base_full.py` | keyword / thinking / code 결과를 조합하여 전체 응답 품질 평가. 위 세 파일의 결과 파일 생성 후 실행 |
 | `evaluate_base_summary.py` | keyword / thinking / code / full 네 단계 결과를 `final_summary.json`으로 요약 |
 
 ### LoRA 모델 평가 파일
@@ -196,7 +196,7 @@ python evaluate_base_full.py --limit 30
 python evaluate_base_summary.py
 ```
 
-> `--limit` 숫자를 높일수록 더 정확한 평가가 가능하다. 100 권장.
+> `--limit` 숫자를 높일수록 더 정확한 평가가 가능하지만, 환경에 따라 속도가 다르므로 30 권장.
 
 ### STEP 2. LoRA 튜닝
 
@@ -225,19 +225,6 @@ python evaluate_lora_code.py --limit 100
 python evaluate_lora_full.py --limit 100
 python evaluate_lora_summary.py
 ```
-
----
-
-## 주요 평가 지표
-
-| 지표 | 설명 | 목표 |
-|------|------|------|
-| `keyword_accuracy` | RAG 키워드 6개 형식 및 vocab 일치율 | 90% 이상 |
-| `thinking_quality` | Thinking Process 5개 항목 완성도 | 90% 이상 |
-| `code_quality` | 코드 문법 통과 및 형식 준수율 | 90% 이상 |
-| `format_compliance` | 전체 응답 형식 준수율 | 70% 이상 |
-| `response_stability` | 형식 + 내용 + 길이 모두 통과율 | 70% 이상 |
-| `baseline_50_score` | 9개 항목 종합 점수 (50점 이상 통과) | 80점 이상 |
 
 ---
 
@@ -283,109 +270,7 @@ split_adapters_tuning_2/
 | 1.5B 경량 모델 테스트 | `split_adapters/qwen2.5-1.5b-*` |
 | 1차/2차 성능 비교 | `split_adapters/qwen2.5-3b-*` vs `split_adapters_tuning_2/qwen2.5-3b-*` |
 
----
 
-## 평가 결과 (실험 기록)
-
-> 평가 샘플 수: 30개 / 베이스 모델: Qwen2.5-3B-Instruct
-
-### keyword (RAG 키워드 생성)
-
-| 지표 | 베이스 | LoRA v1 | LoRA v2 (최종) |
-|------|--------|---------|----------------|
-| keyword_accuracy | 50.0% | 100.0% | **100.0%** |
-| normalized_keyword_accuracy | 80.0% | 100.0% | **100.0%** |
-| rag_exact_6_rate | 73.33% | 100.0% | **100.0%** |
-| allowed_vocab_accuracy | 50.0% | 100.0% | **100.0%** |
-| not_truncated_rate | 83.33% | 100.0% | **100.0%** |
-| avg_generation_seconds | 1.29s | 1.79s | 1.75s |
-
-### thinking (사고과정 생성)
-
-| 지표 | 베이스 | LoRA v1 | LoRA v2 (최종) |
-|------|--------|---------|----------------|
-| thinking_quality | 33.33% | 90.0% | **96.67%** |
-| label_accuracy | 96.67% | 100.0% | **100.0%** |
-| no_extra_section_rate | 33.33% | 90.0% | **96.67%** |
-| concise_rate | 96.67% | 100.0% | **100.0%** |
-| not_truncated_rate | 96.67% | 100.0% | **100.0%** |
-| avg_generation_seconds | 7.71s | 11.77s | 12.76s |
-
-> v1 → v2에서 thinking_quality 90% → 96.67%로 개선.  
-> `<think>` 태그 기반 문제별 사고과정 학습 데이터 개선 효과.
-
-### code (코드 생성)
-
-| 지표 | 베이스 | LoRA v1 | LoRA v2 (최종) |
-|------|--------|---------|----------------|
-| code_quality | 76.67% | 96.67% | **100.0%** |
-| strict_code_quality | 66.67% | 96.67% | **100.0%** |
-| syntax_pass_rate | 76.67% | 96.67% | **100.0%** |
-| one_code_block_rate | 76.67% | 96.67% | **100.0%** |
-| ends_after_code_block | 70.0% | 96.67% | **100.0%** |
-| not_truncated_rate | 83.33% | 96.67% | **100.0%** |
-| avg_generation_seconds | 9.22s | 16.03s | 14.95s |
-
-### full (전체 응답 조합)
-
-| 지표 | 베이스 | LoRA v1 | LoRA v2 (최종) |
-|------|--------|---------|----------------|
-| format_compliance | 16.67% | 86.67% | **96.67%** |
-| relaxed_format_compliance | 40.0% | 96.67% | **100.0%** |
-| usable_response_rate | 40.0% | 96.67% | **100.0%** |
-| baseline_50_pass_rate | 70.0% | 96.67% | **100.0%** |
-| avg_baseline_50_score | 69.63점 | 89.26점 | **90.0점** |
-| keyword_accuracy | 50.0% | 100.0% | **100.0%** |
-| thinking_usable_rate | 73.33% | 100.0% | **100.0%** |
-| code_quality | 76.67% | 96.67% | **100.0%** |
-| explanation_quality | 26.67% | 90.0% | **96.67%** |
-| response_stability | 16.67% | 86.67% | **96.67%** |
-| not_truncated_rate | 63.33% | 96.67% | **100.0%** |
-| generation_time_compliance | 63.33% | 26.67% | 13.33% |
-
-> `generation_time_compliance` 하락은 모델 품질 문제가 아닌 GPU 부하 문제이다.
-
-### 단계별 핵심 지표 요약
-
-| 단계 | format_compliance | response_stability | baseline_50_score |
-|------|------------------|-------------------|-------------------|
-| 베이스 | 16.67% | 16.67% | 69.63점 |
-| LoRA v1 | 86.67% | 86.67% | 89.26점 |
-| LoRA v2 (최종) | **96.67%** | **96.67%** | **90.0점** |
-
-**베이스 대비 최종 개선폭: format_compliance +80%p, response_stability +80%p**
-
----
-
-## 실험 설정 기록
-
-### 1차 실험 (Qwen2.5-0.5B | 김정민)
- 
-| 항목 | 내용 |
-|------|------|
-| 베이스 모델 | `Qwen/Qwen2.5-0.5B-Instruct` |
-| 학습 데이터 | `train_sft_merged.jsonl` (11,480개, 한국어 사고과정 형식) |
-| 평가 스크립트 | `base_eval.py` 직접 작성 |
-| 평가 항목 | 형식 준수율 / 코드 블록 포함률 / 코드 문법 통과율 |
-| 형식 준수율 | 0~15% (프롬프트 개선 전/후) |
-| 코드 블록 포함률 | 85~100% (정답 코드 바로 생성하는 문제 확인) |
-| 코드 문법 통과율 | 80~100% |
-| 결론 | 0.5B 경량 모델의 한계 확인, LoRA 튜닝 필요성 수립 |
- 
-### 2차 실험 — (Qwen2.5-3B | 김재홍)
- 
-| 항목 | 베이스 평가 | LoRA v1 | LoRA v2 |
-|------|------------|---------|---------|
-| 모델 | Qwen2.5-3B-Instruct | 동일 + LoRA adapter | 동일 + LoRA adapter v2 |
-| 튜닝 방식 | — | 태스크별 분리 adapter | 태스크별 분리 adapter |
-| Thinking 데이터 | — | 고정 템플릿 문장 | `<think>` 태그 기반 문제별 추출 |
-| epochs | — | keyword/code: 1.0 / thinking: 2.0 | 동일 |
-| lora_r | — | keyword/code: 8 / thinking: 16 | 동일 |
-| lora_alpha | — | keyword/code: 16 / thinking: 32 | 동일 |
-| 평가 샘플 수 | 30 | 30 | 30 |
-| 결과 폴더 | base_eval_split/ | lora_eval_split/ | lora_eval_split_tuning_2/ |
-| adapter | — | split_adapters.zip | split_adapters_tuning_2.zip |
- 
 ---
 
 ## 주의사항
@@ -394,3 +279,9 @@ split_adapters_tuning_2/
 - 런팟 Pod를 끄기 전에 반드시 adapter 파일을 로컬에 다운로드해야 한다. Pod 종료 시 파일이 삭제된다.
 - `evaluate_base_full.py`와 `evaluate_lora_full.py`는 keyword / thinking / code 평가가 모두 완료된 후 실행해야 한다.
 - `evaluate_lora_*.py` 실행 시 `--adapter-path` 옵션으로 사용할 adapter 경로를 명시할 수 있다.
+- GPU 환경으로 검증 및 반영하려면 기존 CPU 환경의 torch를 삭제하고 재설치한다.
+
+```bash
+pip uninstall torch torchvision torchaudio -y
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+```

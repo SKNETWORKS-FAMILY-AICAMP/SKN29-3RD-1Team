@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 import json
+import logging
 import sys
 from pathlib import Path
 from typing import Any, Dict, List
 
 from dotenv import load_dotenv
+
+# 평가 로그에서 OpenAI embedding HTTP 호출 로그가 과도하게 출력되지 않도록 숨긴다.
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
 
 load_dotenv()
 
@@ -14,6 +19,12 @@ from app.rag.retrieval_v1 import retrieve_v1
 
 
 DEFAULT_DATASET_PATH = "evaluation/retrieval_hard_dataset_expanded_50.json"
+
+# 발표/보고서용 기본값: 상세 케이스 출력 없이 핵심 결과만 출력한다.
+# 필요하면 True로 바꿔 디버깅용 상세 결과를 확인할 수 있다.
+SHOW_CASE_DETAILS = False
+SHOW_FAILURE_CASES = False
+
 
 
 def normalize_case(case: Dict[str, Any]) -> Dict[str, Any]:
@@ -143,16 +154,45 @@ def print_report(result):
     print(f"Recall@5: {result['recall5']:.3f}")
     print(f"MRR     : {result['mrr']:.3f}")
 
-    print("\nCase Details")
-    print("-" * 100)
-    for i, (q, expected, keys, h1, h5, rr) in enumerate(result["rows"], 1):
-        print(f"\n[{i}] {q}")
-        print(f"  expected : {expected}")
-        print(f"  results  : {keys}")
-        print(f"  Hit@1={h1} | Hit@5={h5} | RR={rr:.3f}")
+    if SHOW_CASE_DETAILS:
+        print("\nCase Details")
+        print("-" * 100)
+        for i, (q, expected, keys, h1, h5, rr) in enumerate(result["rows"], 1):
+            print(f"\n[{i}] {q}")
+            print(f"  expected : {expected}")
+            print(f"  results  : {keys}")
+            print(f"  Hit@1={h1} | Hit@5={h5} | RR={rr:.3f}")
 
+
+
+def print_final_summary(plain, v1):
+    print("\n" + "=" * 100)
+    print("FINAL SUMMARY")
+    print("=" * 100)
+    print("Plain Vector Search")
+    print(f"Hit@1   : {plain['hit1']:.3f}")
+    print(f"Recall@5: {plain['recall5']:.3f}")
+    print(f"MRR     : {plain['mrr']:.3f}")
+    print()
+    print("Retrieval V1")
+    print(f"Hit@1   : {v1['hit1']:.3f}")
+    print(f"Recall@5: {v1['recall5']:.3f}")
+    print(f"MRR     : {v1['mrr']:.3f}")
+    print()
+    print("Improvement")
+    print(f"Hit@1    : {plain['hit1']:.3f} -> {v1['hit1']:.3f} ({v1['hit1'] - plain['hit1']:+.3f})")
+    print(f"Recall@5 : {plain['recall5']:.3f} -> {v1['recall5']:.3f} ({v1['recall5'] - plain['recall5']:+.3f})")
+    print(f"MRR      : {plain['mrr']:.3f} -> {v1['mrr']:.3f} ({v1['mrr'] - plain['mrr']:+.3f})")
+    print("=" * 100)
+
+    if v1['recall5'] >= 1.0:
+        print("분석: 모든 Hard Query에서 정답 알고리즘이 Top-5 안에 포함되었습니다.")
+        print("Hit@1 실패는 검색 실패가 아니라 Ranking 순서 최적화 문제로 해석할 수 있습니다.")
 
 def print_failed_cases(result):
+    if not SHOW_FAILURE_CASES:
+        return
+
     failed = [row for row in result["rows"] if not row[3]]
     print("\n" + "=" * 100)
     print(f"Hit@1 실패 케이스: {len(failed)}개")
@@ -189,4 +229,5 @@ if __name__ == "__main__":
     print(f"Recall@5 : {plain['recall5']:.3f} -> {v1['recall5']:.3f}")
     print(f"MRR      : {plain['mrr']:.3f} -> {v1['mrr']:.3f}")
 
+    print_final_summary(plain, v1)
     print_failed_cases(v1)
