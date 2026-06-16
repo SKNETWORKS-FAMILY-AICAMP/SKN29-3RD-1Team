@@ -1,12 +1,3 @@
-"""Retrieval V1 evaluation script.
-
-Default: expanded 50-case basic dataset
-Usage:
-    python eval_retrieval_v1.py
-    python eval_retrieval_v1.py evaluation/retrieval_dataset.json
-    python eval_retrieval_v1.py evaluation/retrieval_dataset_expanded_50.json
-"""
-
 from __future__ import annotations
 
 import json
