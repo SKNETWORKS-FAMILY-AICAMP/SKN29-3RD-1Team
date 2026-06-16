@@ -29,7 +29,7 @@
 
 ---
 
-## 0. 프로젝트 개요
+## 0. 개요
 
 본 프로젝트는 코딩테스트 학습자를 위한 **RAG(Retrieval-Augmented Generation) 기반 알고리즘 학습 지원 시스템**입니다.
 
@@ -667,7 +667,7 @@ skip_headers = [
 사용 모델:
 
 ```text
-sentence-transformers/all-MiniLM-L6-v2
+OpenAI text-embedding-3-small
 ```
 
 저장 구조:
@@ -1673,13 +1673,13 @@ MRR      : 0.509 → 0.970
 | 모델                  | 장점              | 단점              |
 | ------------------- | --------------- | --------------- |
 | OpenAI Embedding    | 성능 우수           | 비용 발생, API 의존   |
-| all-MiniLM-L6-v2    | 가볍고 빠름, 무료      | 영어 중심           |
+| text-embedding-3-small | OpenAI API, 다국어    | 비용 발생           |
 | BGE-M3              | 다국어, 한국어 성능 우수  | 상대적으로 무거움       |
 
 **선택**
 
 ```text
-sentence-transformers/all-MiniLM-L6-v2
+OpenAI text-embedding-3-small
 ```
 
 선택 이유:
@@ -1786,7 +1786,7 @@ Retrieval V1은 다음을 보장합니다.
 | KoNLPy 형태소 분석       | 완료    | TF-IDF baseline 전처리             |
 | 불용어 처리              | 완료    | 조사, 접속어 등 의미 약한 단어 제거           |
 | TF-IDF 희소 표현        | 완료    | Baseline 검색 성능 측정               |
-| Dense Embedding      | 완료    | SentenceTransformer 기반 embedding |
+| Dense Embedding      | 완료    | OpenAI text-embedding-3-small     |
 | VectorDB (ChromaDB) | 완료    | 문서 저장 및 검색                      |
 | Hit@1 평가            | 완료    | Basic / Hard 평가셋 모두 적용          |
 | Recall@5 평가         | 완료    | Basic / Hard 평가셋 모두 적용          |
