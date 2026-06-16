@@ -295,18 +295,46 @@ def expand_filter_keys(keys: List[str]) -> List[str]:
     return list(dict.fromkeys(expanded))
 
 
-def build_chroma_filter(plan: RetrievalPlan, min_score: float = 2.8, max_keys: int = 2) -> Optional[Dict[str, Any]]:
-    """강한 metadata filter는 고신뢰 후보에만 적용한다.
+def _intent_metadata_filter(intent: str) -> Optional[Dict[str, Any]]:
+    """질문 의도별 청크 메타데이터 필터.
 
-    기존 V1은 후보가 있으면 무조건 filter를 걸어 Recall=0 위험이 있었다.
-    V1.1에서는 score가 높은 상위 후보만 필터에 사용하고, 검색 결과는 이후 plain search와 병합한다.
+    splitter.py에서 생성하는 contains_code / contains_complexity / chunk_type과 연결된다.
+    기존 Chroma에 해당 필드가 없더라도 plain search와 병합되므로 Recall 손실을 최소화한다.
+    """
+    if intent == "implementation":
+        return {"contains_code": True}
+    if intent == "complexity":
+        return {"contains_complexity": True}
+    if intent == "concept_explanation":
+        return {"chunk_type": {"$in": ["concept", "explanation"]}}
+    return None
+
+
+def _combine_chroma_filters(*filters: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    valid = [f for f in filters if f]
+    if not valid:
+        return None
+    if len(valid) == 1:
+        return valid[0]
+    return {"$and": valid}
+
+
+def build_chroma_filter(plan: RetrievalPlan, min_score: float = 2.8, max_keys: int = 2) -> Optional[Dict[str, Any]]:
+    """알고리즘 후보 + 질문 의도 기반 metadata filter를 생성한다.
+
+    - algorithm_key: 알고리즘 후보 문서로 검색 범위 축소
+    - contains_code: 구현 코드 질문일 때 코드 chunk 우선
+    - contains_complexity: 시간복잡도 질문일 때 복잡도 chunk 우선
+    - chunk_type: 개념 설명 질문일 때 개념 chunk 우선
     """
     keys = [c["algorithm_key"] for c in plan.algorithm_candidates if float(c.get("score", 0.0)) >= min_score]
-    if not keys:
-        return None
+    algorithm_filter = None
+    if keys:
+        filter_keys = expand_filter_keys(keys[:max_keys])
+        algorithm_filter = {"algorithm_key": {"$in": filter_keys}}
 
-    filter_keys = expand_filter_keys(keys[:max_keys])
-    return {"algorithm_key": {"$in": filter_keys}}
+    intent_filter = _intent_metadata_filter(plan.intent)
+    return _combine_chroma_filters(algorithm_filter, intent_filter)
 
 
 def expand_query_with_candidates(query: str, candidates: List[Dict[str, Any]], max_terms: int = 8) -> str:
@@ -429,10 +457,18 @@ def merge_docs(*doc_lists: List[Any]) -> List[Any]:
     return merged
 
 
-def vote_documents(docs, final_k: int = 5):
-    """청크 검색 결과를 doc_id 기준으로 집계하여 문서 단위 안정성을 높인다."""
+def vote_documents(docs, final_k: int = 5, candidate_priorities: Optional[Dict[str, float]] = None):
+    """청크 검색 결과를 doc_id 기준으로 집계하여 문서 단위 안정성을 높인다.
+
+    candidate_priorities가 주어지면 Retrieval Planner가 예측한 algorithm_key를
+    랭킹에 반영한다. 이 보정은 Recall@5에는 영향을 거의 주지 않으면서,
+    정답 문서가 Top-5 안에 있으나 1등으로 올라오지 못하는 Hard Query의
+    Hit@1을 개선하기 위한 soft re-ranking 단계다.
+    """
     if not docs:
         return []
+
+    candidate_priorities = candidate_priorities or {}
 
     doc_scores = Counter()
     doc_first_rank = {}
@@ -442,9 +478,20 @@ def vote_documents(docs, final_k: int = 5):
     for rank, doc in enumerate(docs, 1):
         meta = doc.metadata
         doc_id = meta.get("doc_id") or meta.get("source_file") or meta.get("filename") or f"unknown_{rank}"
+        algorithm_key = str(meta.get("algorithm_key") or "")
 
         rank_score = 1.0 / rank
         doc_scores[doc_id] += 1.0 + rank_score
+
+        # Planner 후보와 실제 검색 결과가 일치하면 문서 점수를 보정한다.
+        # 예: stack 문서가 Top-5에는 있지만 priority_queue가 1등으로 올라오는 경우를 완화한다.
+        if algorithm_key in candidate_priorities:
+            doc_scores[doc_id] += 4.0 + min(candidate_priorities[algorithm_key], 4.0)
+
+        # 정렬 계열은 세부 정렬 문서가 일반 sort/greedy 의도보다 과도하게 올라오는 경우가 있어
+        # 후보가 sort일 때만 약한 보정을 부여한다.
+        if "sort" in candidate_priorities and algorithm_key in {"merge_sort", "quick_sort", "selection_sort", "bubble_sort", "insertion_sort"}:
+            doc_scores[doc_id] += 1.0
 
         if doc_id not in doc_first_rank:
             doc_first_rank[doc_id] = rank
@@ -507,6 +554,34 @@ def detect_retrieval_failures(
     return reasons
 
 
+def _rank_raw_docs_as_voted(docs: List[Any], final_k: int = 5) -> List[Dict[str, Any]]:
+    """Ablation용: Document Voting을 끈 경우에도 반환 스키마를 유지한다."""
+    results: List[Dict[str, Any]] = []
+    for rank, doc in enumerate((docs or [])[:final_k], 1):
+        meta = getattr(doc, "metadata", {}) or {}
+        doc_id = meta.get("doc_id") or meta.get("source_file") or meta.get("filename") or f"raw_{rank}"
+        results.append({
+            "doc_id": doc_id,
+            "score": round(1.0 / rank, 4),
+            "first_rank": rank,
+            "representative_doc": doc,
+            "chunks": [doc],
+            "chunk_count": 1,
+        })
+    return results
+
+
+
+def candidate_priority_map(plan: RetrievalPlan) -> Dict[str, float]:
+    """Document Voting에서 사용할 후보 알고리즘 우선순위 맵을 만든다."""
+    priorities: Dict[str, float] = {}
+    for candidate in plan.algorithm_candidates:
+        key = candidate.get("algorithm_key")
+        if not key:
+            continue
+        priorities[str(key)] = max(priorities.get(str(key), 0.0), float(candidate.get("score", 1.0)))
+    return priorities
+
 def retrieve_v1(
     query: str,
     search_k: int = 20,
@@ -514,6 +589,9 @@ def retrieve_v1(
     use_mmr: bool = True,
     enable_fallback_rewrite: bool = True,
     rewrite_model: Optional[RewriteModel] = None,
+    use_alias_mapping: bool = True,
+    use_metadata_filter: bool = True,
+    use_document_voting: bool = True,
 ) -> Dict[str, Any]:
     """Retrieval V1.1 main entrypoint.
 
@@ -522,6 +600,8 @@ def retrieve_v1(
     """
     vector_store = get_vector_store()
     plan = build_retrieval_plan(query)
+    if not use_alias_mapping:
+        plan.algorithm_candidates = []
 
     if not plan.need_rag:
         return {
@@ -538,11 +618,11 @@ def retrieve_v1(
         }
 
     # 룰 결과를 query expansion에 우선 활용한다.
-    expanded_query = expand_query_with_candidates(query, plan.algorithm_candidates)
+    expanded_query = expand_query_with_candidates(query, plan.algorithm_candidates) if use_alias_mapping else query
     plan.expanded_query = expanded_query
 
     # 고신뢰 후보만 metadata filter에 사용한다. 단, plain search와 반드시 병합하여 Recall 손실을 줄인다.
-    filter_used = build_chroma_filter(plan)
+    filter_used = build_chroma_filter(plan) if use_metadata_filter else None
     plan.filter_used = filter_used
 
     filtered_docs: List[Any] = []
@@ -564,7 +644,8 @@ def retrieve_v1(
     )
 
     raw_docs = merge_docs(filtered_docs, plain_docs)
-    voted_docs = vote_documents(raw_docs, final_k=final_k)
+    candidate_priorities = candidate_priority_map(plan) if use_alias_mapping else {}
+    voted_docs = vote_documents(raw_docs, final_k=final_k, candidate_priorities=candidate_priorities) if use_document_voting else _rank_raw_docs_as_voted(raw_docs, final_k=final_k)
     failure_reasons = detect_retrieval_failures(query, plan, raw_docs, voted_docs)
 
     fallback_docs: List[Any] = []
@@ -586,7 +667,7 @@ def retrieve_v1(
             use_mmr=use_mmr,
         )
         raw_docs = merge_docs(raw_docs, fallback_docs)
-        voted_docs = vote_documents(raw_docs, final_k=final_k)
+        voted_docs = vote_documents(raw_docs, final_k=final_k, candidate_priorities=candidate_priorities) if use_document_voting else _rank_raw_docs_as_voted(raw_docs, final_k=final_k)
 
     plan.failure_reasons = failure_reasons
 
@@ -605,6 +686,12 @@ def retrieve_v1(
             {"stage": "plain", "query": expanded_query, "filter": None, "count": len(plain_docs)},
             {"stage": "fallback_rewrite", "query": rewritten_query, "filter": None, "count": len(fallback_docs)} if fallback_used else None,
         ],
+        "ablation_flags": {
+            "use_alias_mapping": use_alias_mapping,
+            "use_metadata_filter": use_metadata_filter,
+            "use_document_voting": use_document_voting,
+            "use_mmr": use_mmr,
+        },
     }
 
 

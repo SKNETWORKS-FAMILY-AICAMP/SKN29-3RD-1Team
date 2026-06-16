@@ -494,6 +494,70 @@ def infer_chunk_style(section_title: str, text: str, doc_style: str = "") -> str
 
 
 # ============================================================
+# 5-3. 보고서 대응 메타데이터 보강 유틸
+# ============================================================
+ALGORITHM_ALIASES_FOR_METADATA: Dict[str, List[str]] = {
+    "dfs": ["깊이우선탐색", "depth first search", "스택 탐색"],
+    "bfs": ["너비우선탐색", "breadth first search", "큐 탐색", "가중치 없는 최단거리"],
+    "binary_search": ["이분탐색", "이진탐색", "lower bound", "upper bound", "parametric search"],
+    "heap": ["힙", "heapq", "priority heap", "최솟값", "최댓값"],
+    "priority_queue": ["우선순위 큐", "priority queue", "heapq", "중요도", "급한 순서"],
+    "dp": ["동적계획법", "dynamic programming", "메모이제이션", "점화식", "LCS", "LIS"],
+    "dijkstra": ["다익스트라", "dijkstra", "양수 가중치 최단경로", "single source shortest path"],
+    "bellman_ford": ["벨만포드", "bellman ford", "음수 간선", "음수 사이클"],
+    "floyd_warshall": ["플로이드 워셜", "floyd warshall", "모든 쌍 최단경로"],
+    "union_find": ["유니온 파인드", "서로소 집합", "disjoint set", "연결 여부", "집합 합치기"],
+    "segment_tree": ["세그먼트 트리", "segment tree", "구간 합", "구간 쿼리", "range query", "RMQ"],
+    "trie": ["트라이", "trie", "prefix tree", "접두사", "자동완성"],
+    "mst": ["최소 신장 트리", "minimum spanning tree", "kruskal", "prim", "크루스칼", "프림"],
+    "topological_sort": ["위상정렬", "topological sort", "DAG", "선후관계"],
+    "backtracking": ["백트래킹", "backtracking", "가지치기", "정답 후보"],
+    "greedy": ["그리디", "greedy", "탐욕", "현재 최선"],
+    "sort": ["정렬", "sorting", "오름차순", "내림차순"],
+}
+
+
+def infer_aliases_for_metadata(algorithm_key: str, doc_meta: Dict[str, Any]) -> str:
+    """표준 algorithm_key에 연결되는 동의어를 metadata 문자열(JSON list)로 저장한다."""
+    explicit_aliases = doc_meta.get("aliases") or doc_meta.get("alias") or doc_meta.get("synonyms")
+    return merge_json_lists(explicit_aliases, ALGORITHM_ALIASES_FOR_METADATA.get(str(algorithm_key or ""), []), limit=20)
+
+
+def contains_code_block(text: str) -> bool:
+    """청크가 구현 코드 또는 코드 블록을 포함하는지 판정한다."""
+    raw = text or ""
+    lower = raw.lower()
+    if "```" in raw:
+        return True
+    code_markers = ["def ", "class ", "import ", "return ", "for (", "while (", "public static", "#include", "int main", "print("]
+    return any(marker in lower for marker in code_markers)
+
+
+def contains_complexity_text(section_title: str, text: str) -> bool:
+    """청크가 시간/공간복잡도 설명을 포함하는지 판정한다."""
+    raw = f"{section_title}\n{text}".lower()
+    if any(x in raw for x in ["시간복잡도", "시간 복잡도", "공간복잡도", "공간 복잡도", "복잡도", "big-o", "big o", "빅오"]):
+        return True
+    return bool(re.search(r"\bo\s*\(\s*(1|log\s*n|n|n\s*log\s*n|n\^?2|n2)\s*\)", raw))
+
+
+def normalize_chunk_type(section_title: str, chunk_type: str, text: str) -> str:
+    """concept/code/complexity/pitfall/problem/usage 등 검색 의도와 직접 연결되는 chunk_type 생성."""
+    raw = f"{section_title}\n{text[:700]}".lower()
+    if chunk_type == "problem" or "문제" in raw or "프로그래머스" in raw or "백준" in raw:
+        return "problem"
+    if contains_code_block(text) or "구현" in raw or "코드" in raw or "소스코드" in raw:
+        return "code"
+    if contains_complexity_text(section_title, text):
+        return "complexity"
+    if any(x in raw for x in ["주의", "실수", "헷갈", "예외"]):
+        return "pitfall"
+    if any(x in raw for x in ["언제 사용", "사용하면 좋은", "어떤 경우", "판단 기준"]):
+        return "usage"
+    return chunk_type or "concept"
+
+
+# ============================================================
 # 6. 청킹 전략 3가지 + Adaptive Chunking
 # ============================================================
 
@@ -566,6 +630,53 @@ def chunk_fixed(text: str, size: int = DEFAULT_CHUNK_SIZE, overlap: int = DEFAUL
     return chunks
 
 
+def _split_text_preserving_code_blocks(text: str, max_size: int, overlap: int) -> List[str]:
+    """
+    코드 블록을 절대 내부에서 자르지 않는 Recursive 분할기.
+    분할 우선순위: 섹션 경계 -> 문단 경계 -> 리스트/문장 경계 -> 코드 블록 외부.
+    코드 블록 자체가 max_size를 초과해도 하나의 chunk로 유지한다.
+    """
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=max_size,
+        chunk_overlap=overlap,
+        separators=["\n## ", "\n### ", "\n#### ", "\n\n", "\n- ", "\n* ", "\n", ". ", " ", ""],
+    )
+    parts = re.split(r"(```[\s\S]*?```)", text or "")
+    chunks: List[str] = []
+    buffer = ""
+
+    def flush_buffer():
+        nonlocal buffer
+        if buffer.strip():
+            chunks.extend([c.strip() for c in splitter.split_text(buffer) if c.strip()])
+        buffer = ""
+
+    for part in parts:
+        if not part:
+            continue
+        if part.startswith("```") and part.endswith("```"):
+            # 코드 블록 앞 설명은 먼저 분할하고, 코드 블록은 통째로 보존한다.
+            flush_buffer()
+            chunks.append(part.strip())
+            continue
+        buffer += part
+    flush_buffer()
+
+    # 코드 블록이 아닌 인접 짧은 chunk는 max_size 이내에서 병합한다.
+    merged: List[str] = []
+    for chunk in chunks:
+        is_code = chunk.startswith("```") and chunk.endswith("```")
+        if not merged or is_code or merged[-1].startswith("```"):
+            merged.append(chunk)
+            continue
+        candidate = f"{merged[-1]}\n\n{chunk}".strip()
+        if len(candidate) <= max_size:
+            merged[-1] = candidate
+        else:
+            merged.append(chunk)
+    return merged
+
+
 def chunk_recursive(
     text: str,
     max_size: int = DEFAULT_CHUNK_SIZE,
@@ -573,25 +684,19 @@ def chunk_recursive(
     title: str = "recursive",
     chunk_type: str = "concept",
 ) -> List[Dict[str, Any]]:
-    """전략 2: Recursive Chunking. 코드블록/문단/문장 경계를 우선 보존."""
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=max_size,
-        chunk_overlap=overlap,
-        separators=["\n```", "\n## ", "\n### ", "\n#### ", "\n\n", "\n", ". ", " ", ""],
-    )
-    raw_chunks = splitter.split_text(text)
+    """전략 2: Recursive Chunking. 코드블록 내부 분할 금지."""
+    raw_chunks = _split_text_preserving_code_blocks(text, max_size=max_size, overlap=overlap)
     return [
         {
             "text": c.strip(),
             "title": title if len(raw_chunks) == 1 else f"{title}_{i}",
             "type": chunk_type,
-            "strategy": "recursive",
+            "strategy": "recursive_code_safe",
             "sub_chunk_index": i,
         }
         for i, c in enumerate(raw_chunks)
         if len(c.strip()) >= MIN_CHUNK_SIZE
     ]
-
 
 def _semantic_sections(text: str, doc_format: str = "A") -> List[Dict[str, Any]]:
     """헤더 기준으로 의미 단위 섹션 생성"""
@@ -908,6 +1013,7 @@ def split_md_smart(
         "algorithm": canonical["algorithm"],
         "algorithm_key": canonical["algorithm_key"],
         "display_name": canonical["display_name"],
+        "aliases": infer_aliases_for_metadata(canonical["algorithm_key"], doc_meta),
         "category": graph_meta.get("category") or inferred_meta.get("category") or metadata.get("category", ""),
         "difficulty": graph_meta.get("difficulty") or inferred_meta.get("difficulty") or metadata.get("difficulty", ""),
         "target_level": _meta_value(doc_meta, ["target_level", "difficulty", "level"], inferred_meta.get("difficulty", metadata.get("target_level", ""))),
@@ -961,7 +1067,8 @@ def split_md_smart(
             continue
 
         section_title = chunk.get("title", "")
-        chunk_type = chunk.get("type", "concept")
+        raw_chunk_type = chunk.get("type", "concept")
+        chunk_type = normalize_chunk_type(section_title, raw_chunk_type, text_chunk)
         original_doc_id = base_meta.get("original_doc_id", "doc")
         chunk_uid = f"{original_doc_id}_chunk_{idx + 1:04d}"
         chunk_meta = {
@@ -976,11 +1083,14 @@ def split_md_smart(
             # 청크 설명 메타데이터
             "chunk_type": chunk_type,
             "section_title": section_title,
+            "section_order": idx + 1,
             "parent_section_title": chunk.get("parent_section_title", section_title),
             "strategy": chunk.get("strategy", "adaptive_semantic_recursive" if fmt != "C" else "recursive"),
             "char_count": len(text_chunk),
             "sub_chunk_index": chunk.get("sub_chunk_index", 0),
             "content_type": infer_chunk_content_type(section_title, chunk_type, text_chunk, base_meta.get("content_type", "")),
+            "contains_code": contains_code_block(text_chunk),
+            "contains_complexity": contains_complexity_text(section_title, text_chunk),
             "style": infer_chunk_style(section_title, text_chunk, base_meta.get("style", "")),
             "for_vector_db": True,
             "for_graph_db": True,

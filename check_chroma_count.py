@@ -15,4 +15,5 @@ print("=" * 60)
 
 for col in collections:
     collection = client.get_collection(col.name)
+
     print(f"{col.name} : {collection.count()} chunks")

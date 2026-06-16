@@ -1,14 +1,11 @@
 from langchain_chroma import Chroma
 
+from app.config import CHROMA_PERSIST_DIR
 from app.rag.embeddings import get_embeddings
 
 
-PERSIST_DIR = "./chroma_db"
-
-
 def get_vector_store():
-
     return Chroma(
-        persist_directory=PERSIST_DIR,
+        persist_directory=CHROMA_PERSIST_DIR,
         embedding_function=get_embeddings(),
     )
