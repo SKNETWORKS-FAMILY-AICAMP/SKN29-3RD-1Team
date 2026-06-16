@@ -12,6 +12,10 @@ LOG_LEVEL = os.getenv(
     "INFO"
 ).upper()
 
+ENABLE_LOCAL_MODEL = os.getenv(
+    "ENABLE_LOCAL_MODEL", 
+    "False"
+).lower() == "true"
 
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL),

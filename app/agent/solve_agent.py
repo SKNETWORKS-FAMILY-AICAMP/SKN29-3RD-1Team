@@ -1,11 +1,14 @@
 from typing import TypedDict
 from app.llm.qwen_model import get_qwen_model
 from app.llm.openai_model import get_openai_model
-from app.rag.retriever import get_retriever
+# from app.rag.retriever import get_retriever # replaced to retriever_v1
+from app.rag.retrieval_v1 import retrieve_v1
 from app.mcp.tools import execute_python
 from langgraph.graph import StateGraph, START, END
-from app.utils import extract_json
+from app.utils import extract_json, pretty_print
+from app.config import ENABLE_LOCAL_MODEL
 from app.llm.prompts import (
+    THINK_PROMPT_QWEN,
     THINK_PROMPT,
     CODE_GENERATION_PROMPT,
     DEBUG_PROMPT,
@@ -16,27 +19,54 @@ from app.llm.prompts import (
 import logging
 logger = logging.getLogger(__name__)
 
+
+class ExecutionTrace(TypedDict):
+    code: str
+    result: str
+
+
 class SolveState(TypedDict):
     problem: str
+
+    # think
     think_process: str
-    code: str
+
+    # code & execute
     test_input: str
     expected_output: str
+    code: str
     execution_result: str
+    execution_traces: list[ExecutionTrace]
+    retry_count: int
+    code_passed: bool
+
+    # rag
     algorithm_query: str
     concept_docs: str
+
+    # output
     final_answer: str
-    retry_count: int
+    
 
 def think_node(state):
+    
+    if ENABLE_LOCAL_MODEL:
+        llm = get_qwen_model("think")
 
-    llm = get_qwen_model("think")
-
-    response = llm.invoke(
-        THINK_PROMPT.format(
-            problem=state["problem"]
+        response = llm.invoke(
+            THINK_PROMPT_QWEN.format(
+                problem=state["problem"]
+            )
         )
-    )
+    else:
+        llm = get_openai_model()
+
+        response = llm.invoke(
+            THINK_PROMPT.format(
+                problem=state["problem"]
+            )
+        )
+
     logger.debug(f"""Problem: {state['problem']}\n"Think process: {response.content}""")
 
     return {
@@ -51,8 +81,9 @@ def generate_code_node(state):
         CODE_GENERATION_PROMPT.format(
             problem=state["problem"],
             think_process=state["think_process"]
-        ) # KeyError: '\n  "code"'
+        )
     )
+
     logger.debug(f"code generation response: {response.content}")
 
     parsed = extract_json(response.content)
@@ -60,7 +91,10 @@ def generate_code_node(state):
     return {
         "code": parsed["code"],
         "test_input": parsed["test_input"],
-        "expected_output": parsed["expected_output"]
+        "expected_output": parsed["expected_output"],
+        "execution_traces": [],
+        "retry_count": 0,
+        "code_passed": False,
     }
 
 def execute_node(state):
@@ -69,18 +103,33 @@ def execute_node(state):
         code=state["code"],
         stdin=state["test_input"]
     )
+
     logger.debug(f"execution result: {result}")
 
+    traces = state.get("execution_traces", []).copy()
+
+    traces.append({
+        "code": state["code"],
+        "result": result
+    })
+
     return {
-        "execution_result": result
+        "execution_result": result,
+        "execution_traces": traces
     }
+
+def normalize_output(text: str) -> str:
+    return "\n".join(
+        " ".join(line.split())
+        for line in text.strip().splitlines()
+    )
 
 def execution_router(state):
 
-    if (
-        state["execution_result"].strip()
-        == state["expected_output"].strip()
-    ):
+    actual = normalize_output(state["execution_result"])
+    expected = normalize_output(state["expected_output"])
+
+    if actual == expected:
         return "success"
 
     return "retry"
@@ -98,50 +147,57 @@ def debug_node(state):
             actual_output=state["execution_result"]
         )
     )
+
     logger.debug(f"debug response: {response.content}")
 
     parsed = extract_json(response.content)
 
     return {
         "code": parsed["fixed_code"],
-        "retry_count": state.get("retry_count", 0) + 1
+        "retry_count": state["retry_count"] + 1
     }
 
 def retry_router(state):
 
     if state["retry_count"] >= 3:
+        logger.info("retry 3회 초과, 문제풀이 실패")
         return "failed"
 
-    return "execute"
+    return "retry"
 
 def algorithm_query_node(state):
 
-    llm = get_qwen_model("query")
+    llm = get_openai_model()
 
     response = llm.invoke(
         QUERY_PROMPT.format(
-            problem=state["problem"]
+            problem=state["problem"],
+            think_process=state['think_process'],
+            code=state['code'],
         )
     )
     logger.debug(f"algorithm query response: {response.content}")
 
     return {
-        "algorithm_query": response.content
+        "code_passed": True,
+        "algorithm_query": response.content,
     }
 
 def retrieve_node(state):
 
-    retriever = get_retriever()
-    docs = retriever.invoke(
-        state["algorithm_query"]
-    )
-    logger.debug(f"retrieved {len(docs)} documents for query: {state['algorithm_query']}")
-    logger.debug(f"retrieved docs content: {[doc.page_content[:20] for doc in docs]}")
+    docs = retrieve_v1(
+        query=state["algorithm_query"],
+        search_k=20,
+        final_k=2,
+    )['voted_docs']
 
+    logger.debug(f"retrieved {len(docs)} documents for query: {state['algorithm_query']}")
+
+    seperator = "\n\n======================================================================================\n\n"
     return {
-        "concept_docs": "\n\n".join(
-            doc.page_content
-            for doc in docs
+        "concept_docs": seperator.join(
+            item["representative_doc"].page_content
+            for item in docs
         )
     }
 

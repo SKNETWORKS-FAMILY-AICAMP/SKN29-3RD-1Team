@@ -512,7 +512,7 @@ def retrieve_v1(
     search_k: int = 20,
     final_k: int = 5,
     use_mmr: bool = True,
-    enable_fallback_rewrite: bool = True,
+    enable_fallback_rewrite: bool = False,
     rewrite_model: Optional[RewriteModel] = None,
 ) -> Dict[str, Any]:
     """Retrieval V1.1 main entrypoint.
@@ -570,7 +570,7 @@ def retrieve_v1(
     fallback_docs: List[Any] = []
     rewritten_query: Optional[str] = None
     fallback_used = False
-
+    
     if enable_fallback_rewrite and failure_reasons:
         fallback_used = True
         rewritten_query = rewrite_query(query, plan.algorithm_candidates, rewrite_model=rewrite_model)

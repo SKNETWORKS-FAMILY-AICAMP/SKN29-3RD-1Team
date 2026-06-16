@@ -3,7 +3,7 @@ from transformers import AutoModelForCausalLM
 from peft import PeftModel
 from transformers import pipeline
 from app.llm.openai_model import get_openai_model
-
+from app.config import ENABLE_LOCAL_MODEL
 from langchain_huggingface import HuggingFacePipeline
 
 ADAPTER_MAPPING = {
@@ -11,10 +11,9 @@ ADAPTER_MAPPING = {
     "coding": "adapters/qwen3-0.6B-coding"
 }
 
-DISABLE = True
 
 def get_qwen_model(name: str = None):
-    if DISABLE:
+    if not ENABLE_LOCAL_MODEL:
         return get_openai_model()
     
     model_name = "Qwen/Qwen3-0.6B"
