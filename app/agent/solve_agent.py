@@ -64,12 +64,13 @@ def think_node(state):
             THINK_PROMPT.format(
                 problem=state["problem"]
             )
-        )
+        ).content
 
-    logger.debug(f"""Problem: {state['problem']}\n"Think process: {response.content}""")
+    logger.debug(f" ⭐ TEMP LOG: response_type={type(response)} response={response}")
+    logger.debug(f"""Problem: {state['problem']}\n"Think process: {response}""")
 
     return {
-        "think_process": response.content
+        "think_process": response
     }
 
 def generate_code_node(state):
