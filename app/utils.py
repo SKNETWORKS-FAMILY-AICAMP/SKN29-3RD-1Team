@@ -76,3 +76,29 @@ def dump_agent_state(
             )
             + "\n"
         )
+
+def safe_file_name(input_str: str) -> str:
+    # 1. 윈도우 금지 특수문자(\ / : * ? " < > |)를 언더바(_)로 치환
+    forbidden_chars = r'[\\/:*?"<>|]'
+    filename = re.sub(forbidden_chars, '_', input_str)
+    
+    # 2. 파일 이름 앞뒤의 공백과 마침표(.) 제거
+    filename = filename.strip(' .')
+    
+    # 3. 윈도우 시스템 예약어 처리 (CON, PRN 등 사용 시 앞에 언더바 추가)
+    reserved_names = {
+        "CON", "PRN", "AUX", "NUL",
+        "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
+        "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"
+    }
+    
+    # 확장자를 제외한 본래 파일명만 추출하여 비교
+    base_name = filename.split('.')[0].upper()
+    if base_name in reserved_names:
+        filename = f"_{filename}"
+        
+    # 4. 치환 후 빈 문자열이 되었을 경우 기본값 지정
+    if not filename:
+        filename = "untitled"
+        
+    return filename

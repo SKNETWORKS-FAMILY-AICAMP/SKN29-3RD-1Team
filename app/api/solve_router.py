@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 from app.agent.solve_agent import solve_graph
-from app.utils import pretty_print, dump_agent_state
+from app.utils import pretty_print, dump_agent_state, safe_file_name
 from app.config import get_llm_setting_string
 
 router = APIRouter(
@@ -30,7 +30,7 @@ class SolveResponse(BaseModel):
 @router.post("/solve", response_model=SolveResponse)
 def save_document(request: SolveRequest):
     state = solve_graph.invoke({"problem": request.problem})
-    dump_agent_state("solve_agent", state, "solve_" + get_llm_setting_string)
+    dump_agent_state("solve_agent", state, safe_file_name("solve_" + get_llm_setting_string()))
 
     execution_traces = []
     for et in state['execution_traces']:
