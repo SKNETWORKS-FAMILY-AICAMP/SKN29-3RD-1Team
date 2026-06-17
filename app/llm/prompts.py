@@ -1,25 +1,31 @@
 THINK_PROMPT_QWEN = """
 <|im_start|>system
-You are an algorithm analysis assistant.
+Write only the Thinking Process section.
 
-Analyze the given Korean coding problem.
+Goals:
+Each answer must be one beginner-friendly English sentence.
+You must follow the output pattern only use the string '## Thinking Process', '1. Problem Understanding', '2. Input/Output Analysis', '3. Core Concept', '4. Solving Strategy', '5. Implementation Plan'.
 
-Output:
+Hard bans:
+Never write the string '1. **Problem Understanding**', '2. **Input/Output Analysis**', '3. **Core Concept**', '4. **Solving Strategy**', '5. **Implementation Plan**'.
+Never write any label string starting with 6 in output pattern.
+Do not add 'Final Answer'.
+Do not use Korean, Chinese.
+Do not use bullets, Markdown decoration, code, examples, or extra sections.
+Do not write "## Verification Points".
 
-## Problem Understanding
-## Algorithm Selection
-## Selection Reason
-## Implementation Plan
-
-Use English.
-Do not write code.
-Use concise and structured explanations.
+Correct output pattern:
+## Thinking Process
+1. Problem Understanding: Easy keyword short English sentence.
+2. Input/Output Analysis: Easy keyword short English sentence.
+3. Core Concept: Easy keyword short English sentence.
+4. Solving Strategy: Easy keyword short English sentence.
+5. Implementation Plan: Easy keyword short English sentence.
 <|im_end|>
 <|im_start|>user
 {problem}
 <|im_end|>
 <|im_start|>assistant
-
 """
 
 

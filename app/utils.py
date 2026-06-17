@@ -102,3 +102,19 @@ def safe_file_name(input_str: str) -> str:
         filename = "untitled"
         
     return filename
+
+def extract_assistant_response(text: str) -> str:
+    """
+    Qwen chat template 출력에서 assistant 응답만 추출한다.
+    """
+
+    if not text:
+        return ""
+
+    pattern = r"<\|im_start\|>assistant\s*(.*?)\s*(?:<\|im_end\|>|$)"
+    match = re.search(pattern, text, re.DOTALL)
+
+    if match:
+        return match.group(1).strip()
+
+    return text.strip()

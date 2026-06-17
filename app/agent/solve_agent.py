@@ -4,7 +4,7 @@ from app.llm.openai_model import get_openai_model
 from app.rag.retrieval_v2 import retrieve_v2
 from app.mcp.tools import execute_python
 from langgraph.graph import StateGraph, START, END
-from app.utils import extract_json, pretty_print
+from app.utils import extract_json, pretty_print, extract_assistant_response
 from app.config import ENABLE_LOCAL_MODEL
 from app.llm.prompts import (
     THINK_PROMPT_QWEN,
@@ -57,6 +57,8 @@ def think_node(state):
                 problem=state["problem"]
             )
         )
+        response = extract_assistant_response(response)
+        logger.info(f" ⭐ qwen model response: {response}")
     else:
         llm = get_openai_model()
 
@@ -66,7 +68,6 @@ def think_node(state):
             )
         ).content
 
-    logger.debug(f" ⭐ TEMP LOG: response_type={type(response)} response={response}")
     logger.debug(f"""Problem: {state['problem']}\n"Think process: {response}""")
 
     return {

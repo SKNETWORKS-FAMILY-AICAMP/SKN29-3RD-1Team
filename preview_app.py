@@ -1,7 +1,8 @@
 import requests
 import streamlit as st
+from app.config import FASTAPI_BASE_PATH
 
-API_URL = "http://localhost:8000/preview/solve"
+API_URL = FASTAPI_BASE_PATH + "/preview/solve"
 
 st.set_page_config(
     page_title="AI 알고리즘 튜터",

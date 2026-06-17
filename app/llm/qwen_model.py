@@ -6,10 +6,14 @@ from app.llm.openai_model import get_openai_model
 from app.config import ENABLE_LOCAL_MODEL, QWEN_MODEL_NAME
 from langchain_huggingface import HuggingFacePipeline
 
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parents[2]
+
 ADAPTER_MAPPING = {
-    "thinking": "adapters/qwen3-0.6B-thinking", # 실제 경로로 수정
-    # "coding": "adapters/qwen3-0.6B-coding",
-    # "query": "adapters/qwen3-0.6B-thinking",
+    "thinking": BASE_DIR / "app" / "scripts" / "outputs" / "split_adapters" / "qwen2.5-3b-thinking-lora",
+    "coding": BASE_DIR / "app" / "scripts" / "outputs" / "split_adapters" / "qwen2.5-3b-code-lora",
+    "query": BASE_DIR / "app" / "scripts" / "outputs" / "split_adapters" / "qwen2.5-3b-thinking-lora",
 }
 
 

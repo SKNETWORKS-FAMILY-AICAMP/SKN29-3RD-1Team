@@ -8,7 +8,8 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
-LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+FASTAPI_BASE_PATH = os.getenv("FASTAPI_BASE_PATH", "http://localhost:8000")
+
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 OPENAI_TEMPERATURE = float(os.getenv("OPENAI_TEMPERATURE", "0"))
@@ -27,6 +28,8 @@ CHROMA_PERSIST_DIR = os.getenv(
     "CHROMA_PERSIST_DIR",
     str(BASE_DIR / "chroma_db")
 )
+
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 
 logging.basicConfig(
     level=getattr(logging, LOG_LEVEL, logging.INFO),
