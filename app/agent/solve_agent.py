@@ -1,8 +1,7 @@
 from typing import TypedDict
 from app.llm.qwen_model import get_qwen_model
 from app.llm.openai_model import get_openai_model
-# from app.rag.retriever import get_retriever # replaced to retriever_v1
-from app.rag.retrieval_v1 import retrieve_v1
+from app.rag.retrieval_v2 import retrieve_v2
 from app.mcp.tools import execute_python
 from langgraph.graph import StateGraph, START, END
 from app.utils import extract_json, pretty_print
@@ -185,18 +184,18 @@ def algorithm_query_node(state):
 
 def retrieve_node(state):
 
-    docs = retrieve_v1(
+    docs = retrieve_v2(
         query=state["algorithm_query"],
         search_k=20,
-        final_k=2,
-    )['voted_docs']
+        final_k=3,
+    )['full_documents']
 
     logger.debug(f"retrieved {len(docs)} documents for query: {state['algorithm_query']}")
 
     seperator = "\n\n======================================================================================\n\n"
     return {
         "concept_docs": seperator.join(
-            item["representative_doc"].page_content
+            item["full_text"]
             for item in docs
         )
     }

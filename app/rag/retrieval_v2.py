@@ -11,7 +11,7 @@ from app.rag.retrieval_v1 import (
     vote_documents,
     candidate_priority_map,
 )
-from app.prompts.retrieval_rewrite_prompt import rewrite_query_with_llm
+from app.rag.prompts.retrieval_rewrite_prompt import rewrite_query_with_llm
 
 
 # V2 전용 key 확장.
