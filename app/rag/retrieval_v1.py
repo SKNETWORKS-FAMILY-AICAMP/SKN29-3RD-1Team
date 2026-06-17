@@ -64,6 +64,11 @@ ALGORITHM_ALIASES: Dict[str, List[str]] = {
     "파이썬collections": ["collections", "collection", "counter", "defaultdict", "namedtuple", "deque 라이브러리", "python collections"],
     "파이썬itertools": ["itertools", "permutations", "combinations", "product", "파이썬 순열", "파이썬 조합", "순열 조합 만들기"],
     "집합": ["집합", "set 자료구조", "set", "중복 제거"],
+    "conditional_statement": [
+        "조건문", "if문", "if 문", "if else", "else if", "elif",
+        "두 수 비교", "두 수를 비교", "값 비교", "크기 비교",
+        "비교 연산자", "관계 연산자", "크다", "작다", "같다",
+    ],
 }
 
 # normalize_algorithm_keys.py 실행 전/후 모두 호환되도록 legacy key까지 필터에서 확장한다.
@@ -100,6 +105,9 @@ class RulePattern:
 # 고신뢰/복합 조건을 한 곳에서만 관리한다.
 # all_groups는 각 그룹에서 하나 이상 매칭되어야 한다는 뜻이다.
 RULE_PATTERNS: Tuple[RulePattern, ...] = (
+    RulePattern("conditional_statement", ("조건문", "if문", "if 문", "if else", "else if", "elif"), score=3.6),
+    RulePattern("conditional_statement", ("두 수 비교", "두 수를 비교", "값 비교", "크기 비교", "비교 연산자", "관계 연산자"), score=3.6),
+    RulePattern("conditional_statement", ("조건문", "if문", "if 문"), all_groups=(("비교", "크다", "작다", "같다", "두 수"),), score=3.7),
     RulePattern("priority_queue", ("중요도", "우선도", "급한 순서", "긴급한 순서", "중요한 작업 먼저", "응급실", "먼저 처리"), score=3.2),
     RulePattern("heap", ("전체 정렬은 필요 없", "정렬은 필요 없", "최솟값만", "최소값만", "최댓값만", "최대값만"), score=3.0),
     RulePattern("backtracking", ("정답 후보", "조건에 안 맞", "조건에 맞지 않", "버리는 풀이", "되돌아가면서", "가지치기"), score=3.2),
@@ -572,6 +580,35 @@ def _rank_raw_docs_as_voted(docs: List[Any], final_k: int = 5) -> List[Dict[str,
 
 
 
+
+def _filter_docs_by_algorithm_candidates(
+    docs: List[Any],
+    plan: RetrievalPlan,
+    min_score: float = 2.8,
+) -> List[Any]:
+    """명확한 후보가 있을 때 unrelated 문서를 후처리로 제거한다.
+
+    plain search 병합 과정에서 후보 algorithm_key와 무관한 문서가 섞이는 것을 줄인다.
+    단, 결과가 너무 적어지면 recall 보존을 위해 원본 docs를 유지한다.
+    """
+    candidate_keys = [
+        str(c.get("algorithm_key"))
+        for c in (plan.algorithm_candidates or [])
+        if c.get("algorithm_key") and float(c.get("score", 0.0)) >= min_score
+    ]
+    if not candidate_keys:
+        return docs
+
+    allowed = set(expand_filter_keys(candidate_keys))
+    filtered = [
+        doc for doc in docs
+        if str((getattr(doc, "metadata", {}) or {}).get("algorithm_key", "")) in allowed
+    ]
+
+    return filtered if len(filtered) >= 3 else docs
+
+
+
 def candidate_priority_map(plan: RetrievalPlan) -> Dict[str, float]:
     """Document Voting에서 사용할 후보 알고리즘 우선순위 맵을 만든다."""
     priorities: Dict[str, float] = {}
@@ -644,6 +681,7 @@ def retrieve_v1(
     )
 
     raw_docs = merge_docs(filtered_docs, plain_docs)
+    raw_docs = _filter_docs_by_algorithm_candidates(raw_docs, plan) if use_alias_mapping else raw_docs
     candidate_priorities = candidate_priority_map(plan) if use_alias_mapping else {}
     voted_docs = vote_documents(raw_docs, final_k=final_k, candidate_priorities=candidate_priorities) if use_document_voting else _rank_raw_docs_as_voted(raw_docs, final_k=final_k)
     failure_reasons = detect_retrieval_failures(query, plan, raw_docs, voted_docs)
@@ -667,6 +705,7 @@ def retrieve_v1(
             use_mmr=use_mmr,
         )
         raw_docs = merge_docs(raw_docs, fallback_docs)
+        raw_docs = _filter_docs_by_algorithm_candidates(raw_docs, plan) if use_alias_mapping else raw_docs
         voted_docs = vote_documents(raw_docs, final_k=final_k, candidate_priorities=candidate_priorities) if use_document_voting else _rank_raw_docs_as_voted(raw_docs, final_k=final_k)
 
     plan.failure_reasons = failure_reasons
