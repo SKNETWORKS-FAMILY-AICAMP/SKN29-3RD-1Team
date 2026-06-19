@@ -1,0 +1,938 @@
+question,question_korean
+"Vasya is currently at a car rental service, and he wants to reach cinema. The film he has bought a ticket for starts in t minutes. There is a straight road of length s from the service to the cinema. Let's introduce a coordinate system so that the car rental service is at the point 0, and the cinema is at the point s.
+
+There are k gas stations along the road, and at each of them you can fill a car with any amount of fuel for free! Consider that this operation doesn't take any time, i.e. is carried out instantly.
+
+There are n cars in the rental service, i-th of them is characterized with two integers ci and vi — the price of this car rent and the capacity of its fuel tank in liters. It's not allowed to fuel a car with more fuel than its tank capacity vi. All cars are completely fueled at the car rental service.
+
+Each of the cars can be driven in one of two speed modes: normal or accelerated. In the normal mode a car covers 1 kilometer in 2 minutes, and consumes 1 liter of fuel. In the accelerated mode a car covers 1 kilometer in 1 minutes, but consumes 2 liters of fuel. The driving mode can be changed at any moment and any number of times.
+
+Your task is to choose a car with minimum price such that Vasya can reach the cinema before the show starts, i.e. not later than in t minutes. Assume that all cars are completely fueled initially.
+Input
+
+The first line contains four positive integers n, k, s and t (1 ≤ n ≤ 2·105, 1 ≤ k ≤ 2·105, 2 ≤ s ≤ 109, 1 ≤ t ≤ 2·109) — the number of cars at the car rental service, the number of gas stations along the road, the length of the road and the time in which the film starts. 
+
+Each of the next n lines contains two positive integers ci and vi (1 ≤ ci, vi ≤ 109) — the price of the i-th car and its fuel tank capacity.
+
+The next line contains k distinct integers g1, g2, ..., gk (1 ≤ gi ≤ s - 1) — the positions of the gas stations on the road in arbitrary order.
+
+Output
+
+Print the minimum rent price of an appropriate car, i.e. such car that Vasya will be able to reach the cinema before the film starts (not later than in t minutes). If there is no appropriate car, print -1.
+
+Examples
+
+Input
+
+3 1 8 10
+10 8
+5 7
+11 9
+3
+
+
+Output
+
+10
+
+
+Input
+
+2 2 10 18
+10 4
+20 6
+5 3
+
+
+Output
+
+20
+
+Note
+
+In the first sample, Vasya can reach the cinema in time using the first or the third cars, but it would be cheaper to choose the first one. Its price is equal to 10, and the capacity of its fuel tank is 8. Then Vasya can drive to the first gas station in the accelerated mode in 3 minutes, spending 6 liters of fuel. After that he can full the tank and cover 2 kilometers in the normal mode in 4 minutes, spending 2 liters of fuel. Finally, he drives in the accelerated mode covering the remaining 3 kilometers in 3 minutes and spending 6 liters of fuel.","
+바샤는 현재 렌터카 업체에 있으며 영화관에 가려고 합니다. 그가 예매한 영화는 t분 후에 시작합니다. 렌터카 업체에서 영화관까지는 직선 도로이며 길이는 s입니다. 렌터카 업체를 0, 영화관을 s라고 하는 좌표계를 설정해 보겠습니다.
+
+도로에는 k개의 주유소가 있으며, 각 주유소에서는 차량에 원하는 만큼 연료를 무료로 주유할 수 있습니다! 주유는 시간이 걸리지 않고 즉시 이루어진다고 가정합니다.
+
+렌터카 업체에는 n대의 차량이 있으며, i번째 차량은 각각 ci와 vi라는 두 정수로 표시됩니다. ci는 해당 차량의 렌터카 가격이고 vi는 연료 탱크 용량(리터)입니다. 연료 탱크 용량 vi를 초과하여 주유하는 것은 허용되지 않습니다. 모든 차량은 렌터카 업체에서 연료가 가득 채워진 상태로 제공됩니다.
+
+각 차량은 일반 모드와 가속 모드, 두 가지 속도 모드 중 하나로 주행할 수 있습니다. 일반 모드에서 자동차는 1km를 2분 만에 주유하고 1리터의 연료를 소모합니다. 가속 모드에서는 1km를 1분 만에 주유하지만 2리터의 연료를 소모합니다. 주행 모드는 언제든지 원하는 만큼 변경할 수 있습니다.
+
+당신의 목표는 바샤가 영화 시작 시간 t분 이내에 영화관에 도착할 수 있도록 가장 저렴한 가격의 자동차를 선택하는 것입니다. 모든 자동차는 처음에는 연료가 가득 차 있다고 가정합니다.
+
+입력
+
+첫 번째 줄에는 네 개의 양의 정수 n, k, s, t(1 ≤ n ≤ 2·10⁵, 1 ≤ k ≤ 2·10⁵, 2 ≤ s ≤ 10⁹, 1 ≤ t ≤ 2·10⁹)가 주어집니다. n, k, s는 렌터카 업체에 있는 자동차 수, k는 도로상의 주유소 수, s는 도로의 길이, t는 영화 시작 시간입니다.
+
+다음 n개 줄 각각에는 i번째 자동차의 가격과 연료 탱크 용량을 나타내는 두 개의 양의 정수 ci와 vi (1 ≤ ci, vi ≤ 10⁹)가 주어집니다.
+
+다음 줄에는 도로상의 주유소 위치를 나타내는 서로 다른 k개의 정수 g₁, g₂, ..., gk (1 ≤ g₁ ≤ g₂ - 1)가 임의의 순서로 주어집니다.
+
+출력
+
+영화 시작 전(늦어도 t분 이내)에 바샤가 영화관에 도착할 수 있는 최소 자동차 대여 가격을 출력합니다. 적합한 자동차가 없는 경우 -1을 출력합니다.
+
+예시
+
+입력
+
+3 1 8 10
+10 8
+5 7
+11 9
+3
+
+출력
+
+10
+
+입력
+
+2 2 10 18
+10 4
+20 6
+5 3
+
+출력
+
+20
+
+참고
+
+첫 번째 예시에서 바샤는 첫 번째 차와 세 번째 차 중 어느 차를 이용하든 제시간에 영화관에 도착할 수 있지만, 첫 번째 차를 선택하는 것이 더 저렴합니다. 첫 번째 차의 가격은 10이고, 연료 탱크 용량은 8리터입니다. 바샤는 가속 모드로 3분 동안 첫 번째 주유소까지 이동하며 6리터의 연료를 소모합니다. 그 후 연료 탱크를 가득 채우고 일반 모드로 4분 동안 2km를 이동하며 2리터의 연료를 소모합니다. 마지막으로 가속 모드로 나머지 3km를 3분 동안 이동하며 6리터의 연료를 소모합니다."
+"The Sun is a great heavenly body. The Sun is worshiped by various religions. Bob loves the Sun and loves any object that is similar to the Sun. He noticed that he can find the shape of the Sun in certain graphs. He calls such graphs ""Sunny"".
+
+We define the property ""Sunny"" mathematically. A graph G=(V,E) with a vertex v \in V is called ""Sunny"" when there exists a subgraph G'=(V,E'), E' \subseteq E that has the following two properties. (Be careful, the set of vertices must be the same.)
+
+1. The connected component containing v is a cycle that consists of three or more vertices.
+
+2. Every other component has exactly two vertices.
+
+The following picture is an example of a subgraph G'=(V,E') that has the above property.
+
+<image>
+
+Given a simple graph (In each edge, two end points are different. Every pair of vertices has one or no edge.) G=(V,E), write a program that decides whether the given graph with the vertex 1 is ""Sunny"" or not.
+Input
+
+The first line contains two integers N (odd, 1 \leq N \leq 200) and M (0 \leq M \leq 20,000), separated by a single space. N is the number of the vertices and M is the number of the edges.
+
+The following M lines describe the edges. Each line contains two integers v_i and u_i (1 \leq u_i, v_i \leq N). (u_i, v_i) indicates the edge that connects the two vertices u_i and v_i. u_i and v_i are different, and every pair (u_i,v_i) are different.
+
+Output
+
+Print a line containing ""Yes"" when the graph is ""Sunny"". Otherwise, print ""No"".
+
+Examples
+
+Input
+
+5 5
+1 2
+2 3
+3 4
+4 5
+1 3
+
+
+Output
+
+Yes
+
+
+Input
+
+5 5
+1 2
+2 3
+3 4
+4 5
+1 4
+
+
+Output
+
+No","
+태양은 거대한 천체입니다. 태양은 여러 종교에서 숭배됩니다. 밥은 태양을 좋아하고 태양과 비슷한 모든 물체를 좋아합니다. 그는 특정 그래프에서 태양의 모양을 찾을 수 있다는 것을 발견했습니다. 그는 그러한 그래프를 ""써니(Sunny)""라고 부릅니다.
+
+우리는 ""써니""라는 속성을 수학적으로 정의합니다. 꼭짓점 v ∈ V를 갖는 그래프 G=(V,E)에서, 부분 그래프 G'=(V,E'), E' ∈ E가 다음 두 가지 속성을 만족할 때 ""써니""라고 합니다. (꼭짓점 집합은 반드시 같아야 합니다.)
+
+1. v를 포함하는 연결 요소는 세 개 이상의 꼭짓점으로 이루어진 사이클입니다.
+
+2. 다른 모든 연결 요소는 정확히 두 개의 꼭짓점을 가집니다.
+
+다음 그림은 위의 속성을 만족하는 부분 그래프 G'=(V,E')의 예입니다.
+
+<이미지>
+
+간단한 그래프 G=(V,E)가 주어졌습니다. (각 간선의 양 끝점은 서로 다릅니다. 모든 정점 쌍은 하나의 간선만 가지거나 간선이 없습니다.) 이 그래프에서 정점 1이 ""맑음(Sunny)""인지 아닌지를 판별하는 프로그램을 작성하세요.
+
+입력
+
+첫 번째 줄에는 정수 N(홀수, 1 ≤ N ≤ 200)과 M(0 ≤ M ≤ 20,000)이 공백 하나로 구분되어 주어집니다. N은 정점의 개수이고, M은 간선의 개수입니다.
+
+다음 M줄에는 간선에 대한 설명이 주어집니다. 각 줄에는 정수 v_i와 u_i(1 ≤ u_i, v_i ≤ N)가 주어집니다. (u_i, v_i)는 두 정점 u_i와 v_i를 연결하는 간선을 나타냅니다. u_i와 v_i는 서로 다르며, 모든 쌍 (u_i, v_i)는 서로 다릅니다.
+
+출력
+
+그래프가 ""맑음""이면 ""Yes""를 출력하고, 그렇지 않으면 ""No""를 출력합니다.
+
+예시
+
+입력
+
+5 5
+1 2
+2 3
+3 4
+4 5
+1 3
+
+출력
+
+Yes
+
+입력
+
+5 5
+1 2
+2 3
+3 4
+4 5
+1 4
+
+출력
+
+No"
+"problem
+
+JOI took six subjects: physics, chemistry, biology, earth science, history, and geography. Each test was scored on a 100-point scale.
+
+JOI chooses 3 subjects from 4 subjects of physics, chemistry, biology, and earth science, and 1 subject from 2 subjects of history and geography.
+
+When choosing a subject so that the total score of the test is the highest, find the total score of the test of the subject selected by JOI.
+input
+
+The input consists of 6 lines, with one integer written on each line.
+
+On the first line, JOI's physics test score A is written.
+On the second line, JOI's chemistry test score B is written.
+On the third line, JOI's biological test score C is written.
+On the 4th line, JOI's earth science test score D is written.
+On the 5th line, JOI's history test score E is written.
+On the 6th line, JOI's geography test score F is written.
+
+The written integers A, B, C, D, E, and F are all 0 or more and 100 or less.
+
+output
+
+JOI Output the total score of the test of the subject you chose in one line.
+
+Input / output example
+
+Input example 1
+
+
+100
+34
+76
+42
+Ten
+0
+
+
+Output example 1
+
+
+228
+
+Input example 2
+
+
+15
+twenty one
+15
+42
+15
+62
+
+
+Output example 2
+
+
+140
+
+In I / O Example 1, when JOI chooses four subjects: physics, biology, earth science, and history, the total score of the test is the highest.
+
+The scores for physics, biology, earth science, and history are 100, 76, 42, and 10, respectively, so the total score for the tests of the selected subject is 228.
+
+In I / O Example 2, when JOI chooses four subjects: chemistry, biology, earth science, and geography, the total score of the test is the highest.
+
+The scores for chemistry, biology, earth science, and geography are 21, 15, 42, and 62, respectively, so the total score for the tests of the selected subject is 140.
+
+In Input / Output Example 2, even if JOI chooses four subjects: physics, chemistry, earth science, and geography, the total score of the chosen test is 140.
+
+Creative Commons License
+
+Information Olympics Japan Committee work ""15th Japan Information Olympics JOI 2015/2016 Qualifying Competition Tasks""
+
+
+
+
+
+Example
+
+Input
+
+100
+34
+76
+42
+10
+0
+
+
+Output
+
+228","
+문제
+
+JOI는 물리, 화학, 생물, 지구과학, 역사, 지리 등 6개 과목을 수강했습니다. 각 시험은 100점 만점입니다.
+
+JOI는 물리, 화학, 생물, 지구과학 중 4과목에서 3과목을 선택하고, 역사와 지리 중 2과목에서 1과목을 선택합니다.
+
+총점이 가장 높은 과목을 선택했을 때, JOI가 선택한 과목의 총점을 구하세요.
+
+입력
+
+입력은 각 줄에 하나의 정수가 있는 6줄로 구성됩니다.
+
+첫 번째 줄에는 JOI의 물리 시험 점수 A가 주어집니다.
+
+두 번째 줄에는 JOI의 화학 시험 점수 B가 주어집니다.
+
+세 번째 줄에는 JOI의 생물 시험 점수 C가 주어집니다.
+
+네 번째 줄에는 JOI의 지구과학 시험 점수 D가 주어집니다.
+
+다섯 번째 줄에는 JOI의 역사 시험 점수 E가 주어집니다.
+
+6번째 줄에는 JOI의 지리 시험 점수 F가 적혀 있습니다.
+
+입력된 정수 A, B, C, D, E, F는 모두 0 이상 100 이하입니다.
+
+출력
+
+JOI: 선택한 과목의 시험 총점을 한 줄에 출력하세요.
+
+입력/출력 예시
+
+입력 예시 1
+
+100
+34
+76
+42
+0
+0
+
+출력 예시 1
+
+228
+
+입력 예시 2
+
+15
+21
+15
+42
+15
+62
+
+출력 예시 2
+
+140
+
+입력/출력 예시 1에서 JOI가 물리, 생물, 지구과학, 역사 네 과목을 선택했을 때 시험 총점이 가장 높습니다.
+
+물리, 생물, 지구과학, 역사 과목의 점수는 각각 100점, 76점, 42점, 10점이므로, 선택한 과목 시험의 총점은 228점입니다.
+
+입출력 예시 2에서 JOI가 화학, 생물, 지구과학, 지리학 네 과목을 선택했을 때 시험 총점이 가장 높습니다.
+
+화학, 생물, 지구과학, 지리 과목의 점수는 각각 21점, 15점, 42점, 62점이므로 선택한 과목의 총점은 140점입니다.
+
+입출력 예시 2에서처럼 JOI가 물리, 화학, 지구과학, 지리 네 과목을 선택하더라도 선택한 과목의 총점은 140점입니다.
+
+크리에이티브 커먼즈 라이선스
+
+일본 정보 올림픽 위원회 저작물 ""제15회 일본 정보 올림픽 JOI 2015/2016 예선 과제""
+
+예시
+
+입력
+
+100
+34
+76
+42
+10
+0
+
+출력
+
+228"
+"Everybody knows that lucky numbers are positive integers that contain only lucky digits 4 and 7 in their decimal representation. For example, numbers 47, 744, 4 are lucky and 5, 17, 467 are not.
+
+Polo the Penguin have two positive integers l and r (l < r), both of them are lucky numbers. Moreover, their lengths (that is, the number of digits in the decimal representation without the leading zeroes) are equal to each other.
+
+Let's assume that n is the number of distinct lucky numbers, each of them cannot be greater than r or less than l, and ai is the i-th (in increasing order) number of them. Find a1·a2 + a2·a3 + ... + an - 1·an. As the answer can be rather large, print the remainder after dividing it by 1000000007 (109 + 7).
+Input
+
+The first line contains a positive integer l, and the second line contains a positive integer r (1 ≤ l < r ≤ 10100000). The numbers are given without any leading zeroes.
+
+It is guaranteed that the lengths of the given numbers are equal to each other and that both of them are lucky numbers.
+
+Output
+
+In the single line print a single integer — the answer to the problem modulo 1000000007 (109 + 7).
+
+Examples
+
+Input
+
+4
+7
+
+
+Output
+
+28
+
+
+Input
+
+474
+777
+
+
+Output
+
+2316330","
+누구나 알다시피 행운의 숫자는 십진수로 나타냈을 때 4와 7만 포함하는 양의 정수입니다. 예를 들어, 47, 744, 4는 행운의 숫자이고 5, 17, 467은 행운의 숫자가 아닙니다.
+
+펭귄 폴로는 두 개의 양의 정수 l과 r(l < r)을 가지고 있는데, 둘 다 행운의 숫자입니다. 게다가 두 숫자의 길이(즉, 0을 제외한 십진수의 자릿수)는 같습니다.
+
+서로 다른 행운의 숫자의 개수를 n이라고 하고, 각 행운의 숫자는 r보다 크거나 l보다 작을 수 없으며, ai는 i번째 행운의 숫자(오름차순)라고 합시다. a1·a2 + a2·a3 + ... + an - 1·an을 구하세요. 답이 상당히 클 수 있으므로, 1000000007(10⁹ + 7)로 나눈 나머지를 출력하세요.
+
+입력
+
+첫 번째 줄에는 양의 정수 l이, 두 번째 줄에는 양의 정수 r이 주어집니다 (1 ≤ l < r ≤ 10100000). 숫자 앞에 0이 붙지 않습니다.
+
+두 숫자의 길이는 같고, 둘 다 행운의 숫자라는 것이 보장됩니다.
+
+출력
+
+한 줄에 문제의 결과를 1000000007(10⁹ + 7)로 나눈 나머지 값을 출력합니다.
+
+예시
+
+입력
+
+4
+7
+
+출력
+
+28
+
+입력
+
+474
+777
+
+출력
+
+2316330"
+"While evaluating a expression of  N distinct factors i.e (A1 * A2 * ..... * An) , Chef wanted to know in how may ways this expression can be evaluated by parenthesizing two factors at a time.
+Input
+The first line of the input contains an integer T denoting the number of test cases, for each test case enter the string with N distinct factors (eg xyz , qwerty ,etc)
+
+Output
+For each test case, output a single line with number of ways to evaluate the given expression.
+
+Constraints
+
+1 ≤ T ≤ 50
+1 ≤ N ≤ 34
+
+
+Example
+Input:
+2
+ghjk
+ab
+Output:
+5
+1
+ 
+
+Explanation
+Case 1 :  expression ghjk can be evaluated in 5 ways i.e ((gh)j)k) , (g(h(jk)) , (g((hj)k)) , ((g(hj))k) & ((gh)(jk))
+Case 2 :  expression ab can be evaluated in single way i.e. (ab)","
+N개의 서로 다른 요소(A1 * A2 * ..... * An)로 이루어진 표현식을 평가할 때, Chef는 두 요소씩 괄호로 묶어서 평가하는 방법이 몇 가지인지 알고 싶어 합니다.
+
+입력
+첫 번째 줄에는 테스트 케이스의 개수를 나타내는 정수 T가 주어집니다. 각 테스트 케이스에 대해 서로 다른 N개의 요소로 구성된 문자열(예: xyz, qwerty 등)을 입력하세요.
+
+출력
+각 테스트 케이스에 대해 주어진 표현식을 평가할 수 있는 방법의 수를 한 줄에 출력합니다.
+
+제약 조건
+
+1 ≤ T ≤ 50
+1 ≤ N ≤ 34
+
+예시
+입력:
+2
+ghjk
+ab
+출력:
+5
+1
+
+설명
+케이스 1: 표현식 ghjk는 5가지 방법으로 평가할 수 있습니다. 즉, ((gh)j)k), (g(h(jk)), (g((hj)k)), ((g(hj))k) 및 ((gh)(jk))입니다.
+케이스 2: 표현식 ab는 한 가지 방법으로만 평가할 수 있습니다. 즉, (ab)입니다."
+"Vasya's got a birthday coming up and his mom decided to give him an array of positive integers a of length n.
+
+Vasya thinks that an array's beauty is the greatest common divisor of all its elements. His mom, of course, wants to give him as beautiful an array as possible (with largest possible beauty). Unfortunately, the shop has only one array a left. On the plus side, the seller said that he could decrease some numbers in the array (no more than by k for each number).
+
+The seller can obtain array b from array a if the following conditions hold: bi > 0; 0 ≤ ai - bi ≤ k for all 1 ≤ i ≤ n.
+
+Help mom find the maximum possible beauty of the array she will give to Vasya (that seller can obtain).
+Input
+
+The first line contains two integers n and k (1 ≤ n ≤ 3·105; 1 ≤ k ≤ 106). The second line contains n integers ai (1 ≤ ai ≤ 106) — array a.
+
+Output
+
+In the single line print a single number — the maximum possible beauty of the resulting array.
+
+Examples
+
+Input
+
+6 1
+3 6 10 12 13 16
+
+
+Output
+
+3
+
+
+Input
+
+5 3
+8 21 52 15 77
+
+
+Output
+
+7
+
+Note
+
+In the first sample we can obtain the array:
+
+3 6 9 12 12 15
+
+In the second sample we can obtain the next array:
+
+7 21 49 14 77","
+바샤의 생일이 다가오는데, 엄마가 그에게 길이가 n인 양의 정수 배열 a를 선물하기로 했습니다.
+
+바샤는 배열의 아름다움은 모든 요소의 최대공약수라고 생각합니다. 엄마는 당연히 가능한 한 가장 아름다운 배열(최대한 아름다운 배열)을 선물하고 싶어 합니다. 하지만 가게에는 배열 a가 하나밖에 남지 않았습니다. 다행히 판매자는 배열의 일부 숫자를 (각 숫자당 최대 k까지) 줄일 수 있다고 했습니다.
+
+판매자는 다음 조건을 만족하면 배열 a에서 배열 b를 만들 수 있습니다: bi > 0; 0 ≤ ai - bi ≤ k (모든 1 ≤ i ≤ n).
+
+엄마가 바샤에게 줄 배열의 최대 아름다움(판매자가 만들 수 있는 최대 아름다움)을 찾도록 도와주세요.
+
+입력
+
+첫 번째 줄에는 두 정수 n과 k가 주어집니다 (1 ≤ n ≤ 3·10⁵; 1 ≤ k ≤ 10⁶). 두 번째 줄에는 n개의 정수 ai (1 ≤ ai ≤ 106)가 입력되어 배열 a를 이룹니다.
+
+출력
+
+한 줄에 결과 배열의 최대값이 출력됩니다.
+
+예시
+
+입력
+
+6 1
+3 6 10 12 13 16
+
+출력
+
+3
+
+입력
+
+5 3
+8 21 52 15 77
+
+출력
+
+7
+
+참고
+
+첫 번째 예시에서는 다음과 같은 배열을 얻을 수 있습니다.
+
+3 6 9 12 12 15
+
+두 번째 예시에서는 다음과 같은 배열을 얻을 수 있습니다.
+
+7 21 49 14 77"
+"Beroffice text editor has a wide range of features that help working with text. One of the features is an automatic search for typos and suggestions of how to fix them.
+
+Beroffice works only with small English letters (i.e. with 26 letters from a to z). Beroffice thinks that a word is typed with a typo if there are three or more consonants in a row in the word. The only exception is that if the block of consonants has all letters the same, then this block (even if its length is greater than three) is not considered a typo. Formally, a word is typed with a typo if there is a block of not less that three consonants in a row, and there are at least two different letters in this block.
+
+For example:
+
+  * the following words have typos: ""hellno"", ""hackcerrs"" and ""backtothefutttture""; 
+  * the following words don't have typos: ""helllllooooo"", ""tobeornottobe"" and ""oooooo"". 
+
+
+
+When Beroffice editor finds a word with a typo, it inserts as little as possible number of spaces in this word (dividing it into several words) in such a way that each of the resulting words is typed without any typos.
+
+Implement this feature of Beroffice editor. Consider the following letters as the only vowels: 'a', 'e', 'i', 'o' and 'u'. All the other letters are consonants in this problem.
+Input
+
+The only line contains a non-empty word consisting of small English letters. The length of the word is between 1 and 3000 letters.
+
+Output
+
+Print the given word without any changes if there are no typos.
+
+If there is at least one typo in the word, insert the minimum number of spaces into the word so that each of the resulting words doesn't have any typos. If there are multiple solutions, print any of them.
+
+Examples
+
+Input
+
+hellno
+
+
+Output
+
+hell no 
+
+
+Input
+
+abacaba
+
+
+Output
+
+abacaba 
+
+
+Input
+
+asdfasdf
+
+
+Output
+
+asd fasd f","
+베로피스(Beroffice) 텍스트 편집기는 텍스트 작업을 도와주는 다양한 기능을 제공합니다. 그중 하나는 오타를 자동으로 검색하고 수정 방법을 제안하는 기능입니다.
+
+베로피스는 소문자 영어 알파벳(a부터 z까지 26개)만 사용합니다. 단어에 자음이 세 개 이상 연속으로 나오면 오타로 간주합니다. 단, 연속된 자음의 길이가 모두 같으면 오타로 간주하지 않습니다. 즉, 자음이 세 개 이상 연속으로 나오고, 그 안에 서로 다른 자음이 두 개 이상 있으면 오타로 판단합니다.
+
+예시:
+
+* 다음 단어들은 오타입니다: ""hellno"", ""hackcerrs"", ""backtothefutttture"";
+
+* 다음 단어에는 오타가 없습니다: ""helllllooooo"", ""tobeornottobe"", ""oooooo"".
+
+Beroffice 편집기는 오타가 있는 단어를 발견하면, 생성된 단어들 각각에 오타가 없도록 최소한의 공백을 삽입하여 여러 단어로 나눕니다.
+
+Beroffice 편집기의 이 기능을 구현하세요. 모음은 'a', 'e', ​​'i', 'o', 'u'만 사용합니다. 나머지 글자는 모두 자음입니다.
+
+입력
+
+한 줄에 소문자로 이루어진 단어가 주어집니다. 단어의 길이는 1자에서 3000자 사이입니다.
+
+출력
+
+오타가 없으면 주어진 단어를 변경 없이 출력합니다.
+
+단어에 오타가 하나 이상 있으면, 생성된 단어들 각각에 오타가 없도록 최소한의 공백을 삽입합니다. 여러 해답이 있는 경우, 그중 하나를 출력하세요.
+
+예시
+
+입력
+
+hellno
+
+출력
+
+hell no
+
+입력
+
+abacaba
+
+출력
+
+abacaba
+
+입력
+
+asdfasdf
+
+출력
+
+asd fasd f"
+"Consider a sequence [a1, a2, ... , an]. Define its prefix product sequence <image>.
+
+Now given n, find a permutation of [1, 2, ..., n], such that its prefix product sequence is a permutation of [0, 1, ..., n - 1].
+Input
+
+The only input line contains an integer n (1 ≤ n ≤ 105).
+
+Output
+
+In the first output line, print ""YES"" if such sequence exists, or print ""NO"" if no such sequence exists.
+
+If any solution exists, you should output n more lines. i-th line contains only an integer ai. The elements of the sequence should be different positive integers no larger than n.
+
+If there are multiple solutions, you are allowed to print any of them.
+
+Examples
+
+Input
+
+7
+
+
+Output
+
+YES
+1
+4
+3
+6
+5
+2
+7
+
+
+Input
+
+6
+
+
+Output
+
+NO
+
+Note
+
+For the second sample, there are no valid sequences.","
+수열 [a1, a2, ..., an]을 생각해 보세요. 이 수열의 접두사 곱 수열 <이미지>를 정의하세요.
+
+이제 n이 주어졌을 때, [1, 2, ..., n]의 순열 중에서 접두사 곱 수열이 [0, 1, ..., n - 1]의 순열이 되는 순열을 찾으세요.
+
+입력
+
+입력 줄에는 정수 n(1 ≤ n ≤ 105)이 하나만 주어집니다.
+
+출력
+
+첫 번째 출력 줄에는 그러한 순열이 존재하면 ""YES""를, 존재하지 않으면 ""NO""를 출력하세요.
+
+해결책이 있는 경우, n개의 줄을 더 출력해야 합니다. i번째 줄에는 정수 ai만 주어집니다. 순열의 각 요소는 n보다 크지 않은 서로 다른 양의 정수여야 합니다.
+
+해결책이 여러 개인 경우, 어떤 것이든 출력할 수 있습니다.
+
+예시
+
+입력
+
+7
+
+출력
+
+예
+1
+4
+3
+6
+5
+2
+7
+
+입력
+
+6
+
+출력
+
+아니요
+
+참고
+
+두 번째 예시의 경우, 유효한 시퀀스가 ​​없습니다."
+"Mashmokh is playing a new game. In the beginning he has k liters of water and p coins. Additionally he has a rooted tree (an undirected connected acyclic graph) that consists of m vertices. Each vertex of the tree contains a water tank that is empty in the beginning.
+
+The game begins with the fact that Mashmokh chooses some (no more than k) of these tanks (except the root) and pours into each of them exactly 1 liter of water. Then the following process is performed until there is no water remained in tanks.
+
+  * The process consists of several steps. 
+  * At the beginning of each step Mashmokh opens doors of all tanks. Then Mashmokh closes doors of some tanks (he is not allowed to close door of tank in the root) for the duration of this move. Let's denote the number of liters in some tank with closed door as w, Mashmokh pays w coins for the closing of that tank during this move. 
+  * Let's denote by x1, x2, ..., xm as the list of vertices of the tree sorted (nondecreasing) by their depth. The vertices from this list should be considered one by one in the order. Firstly vertex x1 (which is the root itself) is emptied. Then for each vertex xi (i > 1), if its door is closed then skip the vertex else move all the water from the tank of vertex xi to the tank of its father (even if the tank of the father is closed). 
+
+
+
+Suppose l moves were made until the tree became empty. Let's denote the amount of water inside the tank of the root after the i-th move by wi then Mashmokh will win max(w1, w2, ..., wl) dollars. Mashmokh wanted to know what is the maximum amount of dollars he can win by playing the above game. He asked you to find this value for him.
+Input
+
+The first line of the input contains three space-separated integers m, k, p (2 ≤ m ≤ 105; 0 ≤ k, p ≤ 109). 
+
+Each of the following m - 1 lines contains two space-separated integers ai, bi (1 ≤ ai, bi ≤ m; ai ≠ bi) — the edges of the tree.
+
+Consider that the vertices of the tree are numbered from 1 to m. The root of the tree has number 1.
+
+Output
+
+Output a single integer, the number Mashmokh asked you to find.
+
+Examples
+
+Input
+
+10 2 1
+1 2
+1 3
+3 4
+3 5
+2 6
+6 8
+6 7
+9 8
+8 10
+
+
+Output
+
+2
+
+
+Input
+
+5 1000 1000
+1 2
+1 3
+3 4
+3 5
+
+
+Output
+
+4
+
+Note
+
+The tree in the first sample is shown on the picture below. The black, red, blue colors correspond to vertices with 0, 1, 2 liters of water.
+
+<image>
+
+One way to achieve the maximum amount of money is to put 1 liter of water in each of vertices 3 and 4. The beginning state is shown on the picture below.
+
+<image>
+
+Then in the first move Mashmokh will pay one token to close the door of the third vertex tank. The tree after the first move is shown on the picture below.
+
+<image>
+
+After the second move there are 2 liters of water in the root as shown on the picture below.
+
+<image>","
+마슈모크는 새로운 게임을 시작합니다. 처음에는 k리터의 물과 p개의 동전을 가지고 있습니다. 또한, m개의 정점으로 이루어진 루트 트리(무방향 연결 비순환 그래프)를 가지고 있습니다. 트리의 각 정점에는 처음에는 비어 있는 물탱크가 있습니다.
+
+게임은 마슈모크가 루트를 제외한 물탱크 중 일부(최대 k개)를 선택하여 각각에 정확히 1리터의 물을 붓는 것으로 시작됩니다. 그런 다음, 물탱크에 물이 하나도 남지 않을 때까지 다음 과정을 반복합니다.
+
+* 이 과정은 여러 단계로 구성됩니다.
+
+* 각 단계의 시작 부분에서 마슈모크는 모든 물탱크의 문을 엽니다. 그런 다음, 마슈모크는 해당 단계 동안 일부 물탱크의 문을 닫습니다(루트에 있는 물탱크의 문은 닫을 수 없습니다). 문이 닫힌 물탱크에 남아 있는 물의 양을 w라고 할 때, 마슈모크는 해당 물탱크의 문을 닫는 대가로 w개의 동전을 지불합니다.
+
+* 트리의 정점들을 깊이 순으로 (오름차순으로) 정렬한 리스트를 x1, x2, ..., xm이라고 합시다. 이 리스트의 정점들을 순서대로 하나씩 고려해야 합니다. 먼저 루트 정점인 x1을 비웁니다. 그다음 각 정점 xi (i > 1)에 대해, 문이 닫혀 있으면 해당 정점을 건너뛰고, 문이 닫혀 있으면 정점 xi의 물탱크에 있는 모든 물을 부모 정점의 물탱크로 옮깁니다 (부모 정점의 물탱크가 닫혀 있더라도).
+
+트리가 완전히 비워질 때까지 l번의 이동이 이루어졌다고 가정해 봅시다. i번째 이동 후 루트 정점의 물탱크에 있는 물의 양을 wi라고 하면, 마슈모크는 최대 (w1, w2, ..., wl) 달러를 획득하게 됩니다. 마슈모크는 위 게임을 통해 얻을 수 있는 최대 상금이 얼마인지 알고 싶어 합니다. 그는 당신에게 이 값을 구해달라고 요청했습니다.
+
+입력
+
+첫 번째 줄에는 공백으로 구분된 세 개의 정수 m, k, p가 주어집니다 (2 ≤ m ≤ 10⁵; 0 ≤ k, p ≤ 10⁹).
+
+다음 m-1개의 줄에는 각각 공백으로 구분된 두 개의 정수 ai, bi가 주어집니다 (1 ≤ ai, bi ≤ m; ai ≠ bi). 이들은 트리의 간선입니다.
+
+트리의 정점은 1부터 m까지 번호가 매겨져 있으며, 루트는 1입니다.
+
+출력
+
+마슈모크가 구하라고 한 정수 하나를 출력하세요.
+
+예시
+
+입력
+
+10 2 1
+1 2
+1 3
+3 4
+3 5
+2 6
+6 8
+6 7
+9 8
+8 10
+
+출력
+
+2
+
+입력
+
+5 1000 1000
+1 2
+1 3
+3 4
+3 5
+
+출력
+
+4
+
+참고
+
+첫 번째 예시의 트리는 아래 그림과 같습니다. 검정색, 빨간색, 파란색은 각각 0, 1, 2리터의 물이 있는 꼭짓점을 나타냅니다.
+
+<이미지>
+
+최대 금액을 얻는 한 가지 방법은 3번과 4번 꼭짓점에 각각 1리터의 물을 넣는 것입니다. 초기 상태는 아래 그림과 같습니다.
+
+<이미지>
+
+그다음 마슈모크는 첫 번째 수에서 토큰 1개를 지불하여 3번 꼭짓점 물탱크의 문을 닫습니다. 첫 번째 수 후의 트리는 아래 그림과 같습니다.
+
+<이미지>
+
+두 번째 이동 후, 아래 그림과 같이 뿌리에 2리터의 물이 들어 있습니다.
+
+<이미지>"
