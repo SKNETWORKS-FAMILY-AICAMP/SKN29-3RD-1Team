@@ -11,7 +11,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parents[2]
 
 ADAPTER_MAPPING = {
-    "thinking": BASE_DIR / "app" / "scripts" / "outputs" / "split_adapters" / "qwen2.5-3b-thinking-lora",
+    "think": BASE_DIR / "app" / "scripts" / "outputs" / "split_adapters" / "qwen2.5-3b-thinking-lora",
     "coding": BASE_DIR / "app" / "scripts" / "outputs" / "split_adapters" / "qwen2.5-3b-code-lora",
     "query": BASE_DIR / "app" / "scripts" / "outputs" / "split_adapters" / "qwen2.5-3b-thinking-lora",
 }
