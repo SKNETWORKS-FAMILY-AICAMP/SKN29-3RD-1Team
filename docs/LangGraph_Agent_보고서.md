@@ -302,7 +302,7 @@ def retry_router(state):
 
 `.env`의 `ENABLE_LOCAL_MODEL=True` 설정 시 로컬 Qwen 호출이 가능하다.
 
-[로라 어댑터 G-Drive]()
+[로라 어댑터 G-Drive](https://drive.google.com/drive/folders/1U3f4zt3wFRT2zX3OjdKIBITGnj6zlRIl)
 
 어댑터 다운로드 후 어댑터 경로 매핑 수정
 ```python
