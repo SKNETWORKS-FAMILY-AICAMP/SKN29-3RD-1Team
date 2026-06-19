@@ -45,7 +45,7 @@
 
 - **LangGraph 에이전트**: 문제 분석 → 코드 생성 → 실행 검증 → 자동 디버깅을 하나의 흐름으로 처리
 - **RAG(Retrieval-Augmented Generation)**: 알고리즘 개념 문서를 검색하여 답변에 근거 제공
-- **Qwen3 LoRA 파인튜닝**: 알고리즘 사고 과정과 쿼리 생성에 특화된 로컬 모델 활용
+- **Qwen LoRA 파인튜닝**: 알고리즘 사고 과정과 쿼리 생성에 특화된 로컬 모델 활용
 
 <br/>
 
@@ -55,7 +55,7 @@
 2. **코드 실행 기반 정확성 검증**: 생성된 코드를 직접 실행하여 정답 여부를 확인하고 오류 발생 시 자동 디버깅
 3. **RAG 기반 개념 보강**: 201개 알고리즘 학습 문서·1686개 청크를 구축하여 관련 개념을 LLM 컨텍스트로 제공
 4. **Retrieval 성능 최적화**: Alias Mapping, Metadata Filtering, MMR Search, Document Voting 등을 조합하여 Hard Query Hit@1 90% 달성
-5. **Qwen3 LoRA 파인튜닝**: 사고 과정(think)과 쿼리 생성(query) 단계에 특화된 경량 로컬 모델 구축
+5. **Qwen LoRA 파인튜닝**: 사고 과정(think)과 쿼리 생성(query) 단계에 특화된 경량 로컬 모델 구축
 6. **FastAPI 기반 서비스 제공**: RESTful API로 전체 파이프라인을 단일 엔드포인트로 제공
 
 <br/>
@@ -77,7 +77,7 @@
 | 서버 | FastAPI, Uvicorn |
 | 에이전트 | LangGraph |
 | LLM (추론) | OpenAI GPT-4o-mini |
-| LLM (로컬) | Qwen3-0.6B, PEFT/LoRA, Transformers, HuggingFace |
+| LLM (로컬) | Qwen2.5-3B-Instruct, PEFT/LoRA, Transformers, HuggingFace |
 | 임베딩 | OpenAI text-embedding-3-small, sentence-transformers |
 | 벡터DB | ChromaDB |
 | RAG | LangChain, LangChain-Chroma, LangChain-OpenAI |
@@ -96,7 +96,7 @@
 | **자동 디버깅** | 실행 결과가 기대값과 다를 경우 오류 원인 분석 후 코드 수정 (최대 3회 재시도) |
 | **RAG 기반 개념 검색** | 코드 검증 성공 후 관련 알고리즘 개념 문서를 ChromaDB에서 검색하여 설명에 활용 |
 | **Retrieval V1** | Alias Mapping, Metadata Filtering, Query Expansion, MMR Search, Document Voting, Failure Detection, Fallback Query Rewrite를 조합한 고도화 검색 |
-| **Qwen3 LoRA** | 알고리즘 사고 과정과 RAG 쿼리 생성에 특화된 Qwen3-0.6B 파인튜닝 모델 |
+| **Qwen LoRA** | 알고리즘 사고 과정과 RAG 쿼리 생성에 특화된 Qwen2.5-3B-Instruct 파인튜닝 모델 |
 | **Swagger UI** | `localhost:8000/docs` 에서 전체 API 엔드포인트 테스트 가능 |
 
 <br/>
@@ -131,16 +131,16 @@
 │  (generate/debug/    │         │  ├── Alias Mapping        │
 │   final_answer)      │         │  ├── Metadata Filtering   │
 │                      │         │  ├── Query Expansion      │
-│  Qwen3-0.6B + LoRA   │         │  ├── MMR Search           │
-│  (think/query)       │         │  ├── Document Voting      │
-└──────────────────────┘         │  └── Fallback Rewrite     │
-                                 └──────────────┬────────────┘
+│  Qwen3-2.5B-Instruct │         │  ├── MMR Search           │
+│   + LoRA             │         │  ├── Document Voting      │
+│  (think/query)       │         │  └── Fallback Rewrite     │
+└──────────────────────┘         └──────────────┬────────────┘
                                                 │
                                                 ▼
                                  ┌───────────────────────────┐
                                  │       ChromaDB            │
-                                 │  알고리즘 개념 문서        │
-                                 │  201개 문서 / 1686 청크   │
+                                 │  알고리즘 개념 문서          │
+                                 │  201개 문서 / 1686 청크     │ 
                                  │  text-embedding-3-small   │
                                  └───────────────────────────┘
 ```
@@ -189,6 +189,116 @@ chroma_db/ (로컬 디렉토리)
 
 <br/>
 
+## sLLM 모델링 파이프라인
+Pipeline Steps
+| 단계	| 내용	| 주요 파일 |
+|---|---:|---:|
+| 데이터셋 구축	| OpenCodeReasoning 데이터셋을 학습용/평가용으로 분리	| `opencode_reasoning_train_4000.jsonl`, `opencode_reasoning_test_1000.jsonl` | 
+| Base 모델 평가	| 튜닝 전 Qwen/Solar 계열 모델의 기본 생성 성능 측정	| evaluate_base_*.py | 
+| LoRA/QLoRA 학습	| 제한된 GPU 환경에서 adapter 기반 파인튜닝 수행	| train_qwen_split_adapter.py | 
+| 개선 모델 평가	| keyword, thinking, code, full 응답별 품질 평가	| evaluate_lora_*.py | 
+| 결과 비교 분석	| Base와 LoRA 모델의 성능 차이, 실패 유형, 개선 방향 분석	| - | 
+
+## sLLM 적용 개요
+
+| 태스크 | 출력 형식 | 설명 |
+|--------|----------|------|
+| keyword | `## RAG Keywords` | 풀이에 필요한 알고리즘 키워드 6개 생성 |
+| thinking | `## Thinking Process` | 문제 이해부터 구현 계획까지 5단계 사고과정 생성 |
+| code | `## Final Answer` | 완전한 Python 풀이 코드 생성 |
+
+## sLLM SFT 데이터 구성
+
+| 파일 | 레코드 수 | 용도 |
+|------|----------|------|
+| `opencode_reasoning_train_4000.jsonl` | 4,000개 | LoRA 튜닝 학습 데이터 |
+| `opencode_reasoning_test_1000.jsonl` | 1,000개 | 베이스 / LoRA 평가 데이터 |
+
+# sLLM 베이스모델 및 LoRA튜닝 목표
+
+최종 선정된 Qwen2.5-3B-Instruct 모델을 베이스로 LoRA SFT 튜닝을 적용한다.
+
+| 지표 | 설명 | 베이스모델 목표 | LoRA튜닝 목표|
+|------|------|------|------|
+| `keyword_accuracy` | RAG 키워드 6개 형식 및 vocab 일치율 | 50% 이상 | 90% 이상 |
+| `thinking_quality` | Thinking Process 5개 항목 완성도 | 50% 이상 | 90% 이상 |
+| `code_quality` | 코드 문법 통과 및 형식 준수율 | 50% 이상 | 90% 이상 |
+| `format_compliance` | 전체 응답 형식 준수율 | 50% 이상 | 70% 이상 |
+| `response_stability` | 형식 + 내용 + 길이 모두 통과율 | 50% 이상 | 70% 이상 |
+| `baseline_50_score` | 9개 항목 종합 점수 (50점 이상 통과) | 50점 이상 | 80점 이상 |
+
+## LoRA 하이퍼파라미터 튜닝 기준
+
+LoRA 튜닝은 BASE 모델과의 비교 공정성을 유지하기 위해 프롬프트는 변경하지 않고, 학습 하이퍼파라미터만 조정하였다.
+
+| 항목 | 1차 설정 | 2차 설정 | 변경 목적 |
+|---|---:|---:|---|
+| learning rate | `2e-4` | `1e-4` | 업데이트 강도를 낮춰 BASE 지식 손상을 줄이고 학습 안정성 확보 |
+| gradient accumulation | `8` | `16` | 실질 batch 크기를 늘려 학습 업데이트를 안정화 |
+| keyword epochs | `1.0` | `1.0` | keyword 형식 안정성이 충분하여 변경하지 않음 |
+| keyword max length | `768` | `768` | keyword 출력은 짧은 응답이므로 변경하지 않음 |
+| keyword LoRA rank / alpha | `8 / 16` | `8 / 16` | 기존 keyword 튜닝 설정 유지 |
+| thinking epochs | `3.0` | `2.0` | 과도한 형식 학습과 reasoning 압축을 줄임 |
+| thinking max length | `768` | `1024` | 풀이 근거, 제약조건, 세부 reasoning이 잘리지 않도록 확장 |
+| thinking LoRA rank / alpha | `8 / 32` | `16 / 32` | reasoning 표현 용량을 늘림 |
+| code epochs | `1.0` | `1.0` | code는 epoch보다 adapter 용량 조정 중심으로 개선 |
+| code max length | `1024` | `1024` | 코드 출력 길이는 기존 설정 유지 |
+| code LoRA rank / alpha | `8 / 16` | `16 / 32` | 코드 구조와 코드블록 안정성 개선 |
+
+## sLLM 평가 요약
+
+본 프로젝트에서는 모델 응답 품질을 한 가지 기준으로만 판단하지 않고, 서로 다른 관점의 평가 방식을 함께 사용하여 1~5점까지의 등급으로 OpenAI Chatgpt-5.5 모델이 판단하였다.
+
+| 평가 방식 | 목적 |
+|---|---|
+| 형식 평가 | 모델이 요구한 출력 형식과 구조를 잘 지켰는지 확인 |
+| Reference 기반 평가 | 모델 답변이 기준 정답 reasoning/code와 얼마나 내용적으로 일치하는지 확인 |
+| 요구사항 기반 평가 | 모델 답변이 실제 문제 해결 요구사항을 만족하는지 확인 |
+
+## 기존 자동 형식 평가 점수
+
+| 평가 항목 | BASE | TUNING 1차 | TUNING 2차 |
+|---|---:|---:|---:|
+| keyword_accuracy | 50.00 | 100.00 | 100.00 |
+| thinking_quality | 33.33 | 90.00 | 96.67 |
+| code_quality | 76.67 | 96.67 | 100.00 |
+| full avg_baseline_50_score | 69.63 | 89.26 | 90.00 |
+| full format_compliance | 16.67 | 86.67 | 96.67 |
+| full usable_response_rate | 40.00 | 96.67 | 100.00 |
+
+## Reference 기반 평가 점수
+| Stage | BASE | TUNING 1차 | TUNING 2차 |
+|---|---:|---:|---:|
+| keyword | 4.17 | 4.00 | 4.03 |
+| thinking | 4.07 | 3.63 | 4.20 |
+| code | 4.73 | 4.60 | 4.83 |
+| full | 4.57 | 4.23 | 4.63 |
+
+## 요구사항 기반 평가 점수
+
+| Stage | BASE | TUNING 1차 | TUNING 2차 |
+|---|---:|---:|---:|
+| keyword | 3.10 | 3.33 | 3.17 |
+| thinking | 4.60 | 4.43 | 4.67 |
+| code | 4.93 | 4.93 | 5.00 |
+| full | 4.87 | 4.73 | 4.83 |
+
+## 평가 점수 종합 해석
+
+| 관점 | 가장 우수한 모델 | 판단 근거 |
+|---|---|---|
+| 형식 안정성 | TUNING 2차 | keyword, thinking, code, full 형식 지표가 가장 높음 |
+| Reference 내용 일치도 | TUNING 2차 | thinking, code, full에서 BASE를 소폭 상회 |
+| 실제 문제 요구사항 충족 | BASE | full 요구사항 기반 점수가 가장 높음 |
+| 튜닝 개선 흐름 | TUNING 2차 | 1차 대비 내용 일치도와 코드 안정성이 회복됨 |
+
+최종적으로 TUNING 2차는 형식 안정성과 reference 기반 내용 일치도에서는 가장 좋은 결과를 보였고, 요구사항 기반 full 평가는 BASE와 거의 비슷하지만 아직 소폭 낮은 수준으로 평가되었다.
+
+---
+
+
+<br/>
+
 ## 디렉토리 구조
 
 ```text
@@ -223,11 +333,38 @@ SKN29-3RD-1Team/
 │   │   ├── loader.py               문서 로더
 │   │   ├── ingest.py               데이터 수집 파이프라인
 │   │   └── konlpy_preprocessing.py 형태소 분석 (TF-IDF baseline용)
-│   │
+│   ├── data/
+│   │   ├── opencode_reasoning_train_4000.jsonl   # 학습 데이터 (4,000개)
+│   │   └── opencode_reasoning_test_1000.jsonl    # 평가 데이터 (1,000개)
+│   │   
 │   └── scripts/                    모델 학습 및 평가 스크립트
-│       ├── train_qwen_adapter.py
-│       ├── evaluate_base_*.py
-│       └── evaluate_lora_*.py
+│       ├── qwen_base_model.py      Qwen2.5-3B-Instruct_BASE모델 생성
+│       ├── train_qwen_adapter.py   1차 SFT LoRA Adapter 생성(형식 우선)
+│       ├── train_qwen_split_adapter.py 2차 SFT LoRA Adapter 생성(형식 완화, 내용 우선)
+│       ├── eval_common.py          형식 자체평가 공통코드
+│       ├── evaluate_base_*.py      베이스모델 형식 자체평가 코드
+│       ├── evaluate_lora_*.py      LoRA모델 형식 자체평가 코드
+│       └── outputs/
+│           ├── base_eval_split/    
+│           │   ├── code/          (details.csv, details.json, summary.json)  코드 형식 평가 결과
+│           │   ├── keyword/       (details.csv, details.json, summary.json)  키워드 형식 평가 결과  
+│           │   ├── thinking/      (details.csv, details.json, summary.json)  사고과정 형식 평가 결과
+│           │   ├── full/          (details.csv, details.json, summary.json)  전체 형식 평가 결과
+│           │   └── final_summary.json      베이스모델 최종 요약
+│           │
+│           ├── lora_eval_split/
+│           │   ├── code/          (details.csv, details.json, summary.json)  코드 형식 평가 결과  
+│           │   ├── keyword/       (details.csv, details.json, summary.json)  키워드 형식 평가 결과
+│           │   ├── thinking/      (details.csv, details.json, summary.json)  사고과정 형식 평가 결과
+│           │   ├── full/          (details.csv, details.json, summary.json)  전체 형식 평가 결과
+│           │   └── final_summary.json      1차 lora튜닝 최종 요약
+│           │
+│           └── lora_eval_split_tuning_2/
+│               ├── code/          (details.csv, details.json, summary.json)  코드 형식 평가 결과
+│               ├── keyword/       (details.csv, details.json, summary.json)  키워드 형식 평가 결과
+│               ├── thinking/      (details.csv, details.json, summary.json)  사고과정 형식 평가 결과
+│               ├── full/          (details.csv, details.json, summary.json)  전체 형식 평가 결과
+│               └── final_summary.json     2차 lora튜닝 최종 요약
 │
 ├── evaluation/                     평가셋 및 TF-IDF baseline
 │   ├── retrieval_dataset_expanded_50.json
@@ -335,7 +472,7 @@ python eval_retrieval_v1_hard.py
 
 <br/>
 
-**김재홍**: 
+**김재홍**: 로컬 sLLM 구현 및 파인튜닝을 경험하였습니다. 경량 모델 한계를 극복하기 위해 LoRA 하이퍼 파라미터 튜닝을 통해 응답 지표가 크게 개선되어 실 서비스 적용 가능성을 확인하였습니다. 추론 속도와 GPU 부담을 줄이기 위한 분리 생성, 템플릿 조립, 캐싱, 메모리 최적화 등과 같은 전략은 실무 연계 시 비용 절감으로 연결되는 점을 알게 되었습니다.
 
 <br/>
 

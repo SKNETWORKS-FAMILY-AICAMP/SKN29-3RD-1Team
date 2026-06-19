@@ -78,6 +78,61 @@ GPT 계열 모델이 생성한 `<think>` 태그 기반 추론 과정 및 Python 
 3. `<think>` 태그 내용을 추출하여 5개 항목 Thinking Process로 변환 (v2 개선 사항)
 4. keyword / thinking / code 태스크별 학습 샘플로 분리 → 최대 **12,000개** 학습 샘플 생성
 
+
+--- 
+
+## LoRA 하이퍼파라미터 튜닝 기준
+
+LoRA 튜닝은 BASE 모델과의 비교 공정성을 유지하기 위해 프롬프트는 변경하지 않고, 학습 하이퍼파라미터만 조정하였다.
+
+하이퍼파라미터 변경의 목적은 다음과 같다.
+
+- 형식 과적합을 줄인다.
+- BASE 모델이 가진 기존 문제풀이 능력 손상을 줄인다.
+- thinking 응답에서 세부 조건과 풀이 근거가 과도하게 줄어드는 문제를 완화한다.
+- code 응답의 코드블록 안정성과 구현 구조를 개선한다.
+
+| 항목 | 1차 설정 | 2차 설정 | 변경 목적 |
+|--------|--------|--------|--------|
+| learning rate | `2e-4` | `1e-4` | 업데이트 강도를 낮춰 BASE 지식 손상을 줄이고 학습 안정성 확보 |
+| gradient accumulation | `8` | `16` | 실질 batch 크기를 늘려 학습 업데이트를 안정화 |
+| keyword epochs | `1.0` | `1.0` | keyword 형식 안정성이 충분하여 변경하지 않음 |
+| keyword max length | `768` | `768` | keyword 출력은 짧은 응답이므로 변경하지 않음 |
+| keyword LoRA rank / alpha | `8 / 16` | `8 / 16` | 기존 keyword 튜닝 설정 유지 |
+| thinking epochs | `3.0` | `2.0` | 과도한 형식 학습과 reasoning 압축을 줄임 |
+| thinking max length | `768` | `1024` | 풀이 근거, 제약조건, 세부 reasoning이 잘리지 않도록 확장 |
+| thinking LoRA rank / alpha | `8 / 32` | `16 / 32` | reasoning 표현 용량을 늘림 |
+| code epochs | `1.0` | `1.0` | code는 epoch보다 adapter 용량 조정 중심으로 개선 |
+| code max length | `1024` | `1024` | 코드 출력 길이는 기존 설정 유지 |
+| code LoRA rank / alpha | `8 / 16` | `16 / 32` | 코드 구조와 코드블록 안정성 개선 |
+
+## 하이퍼파라미터 변경 해석
+
+- learning rate를 낮춘 이유
+  - LoRA가 너무 강하게 학습되면 BASE 모델의 기존 문제풀이 능력이 손상될 수 있다.
+  - 특히, 형식은 좋아지지만 내용 밀도가 낮아지는 문제가 발생할 수 있다.
+  - 따라서 `2e-4`에서 `1e-4`로 낮춰 안정적인 학습을 유도하였다.
+
+- gradient accumulation을 늘린 이유
+  - GPU 메모리 제한으로 실제 batch size를 크게 늘리기 어렵다.
+  - gradient accumulation을 늘리면 작은 batch 환경에서도 더 안정적인 업데이트 효과를 얻을 수 있다.
+
+- thinking max length를 늘린 이유
+  - thinking 응답은 문제 조건, 알고리즘 선택 이유, 제약조건, 풀이 전략을 포함해야 한다.
+  - max length가 짧으면 답변이 지나치게 압축되어 reference reasoning과의 내용 일치도가 낮아질 수 있다.
+
+- thinking epochs를 줄인 이유
+  - thinking을 오래 학습하면 출력 형식에는 더 잘 맞지만 내용이 정형화될 수 있다.
+  - reasoning 다양성과 세부 조건 보존을 위해 epoch를 줄였다.
+
+- LoRA rank를 늘린 이유
+  - rank는 adapter가 학습할 수 있는 표현 용량과 관련된다.
+  - thinking과 code는 keyword보다 복잡한 출력을 요구하므로 rank를 늘려 표현력을 보강하였다.
+
+- keyword 설정을 유지한 이유
+  - keyword는 이미 형식 안정성이 높은 stage였다.
+  - 따라서 불필요한 변경으로 성능이 흔들리는 것을 피하고 기존 설정을 유지하였다.
+
 ---
 
 ## 폴더 구조
@@ -146,6 +201,7 @@ app/
 |------|------|
 | `eval_common.py` | 모든 평가 스크립트가 공유하는 공통 로직. 데이터 로딩, 모델 실행(BaseModelRunner / LoraModelRunner), 결과 저장, ALLOWED_VOCAB 정의 포함 |
 | `qwen_base_model.py` | Qwen 베이스 모델과 토크나이저 로딩 함수 모음. GPU/CPU 장치 선택 포함 |
+| `lora_tunning.ipynb`| Qwen/Qwen3-4B-Thinking-2507 모델 Distillation 성능 비교 |
 
 ### 튜닝 파일
 
@@ -254,6 +310,7 @@ split_adapters_tuning_2/
 ├── qwen2.5-3b-keyword-lora/
 ├── qwen2.5-3b-thinking-lora/
 └── qwen2.5-3b-code-lora/
+
 ```
 
 - 1차 실험의 Thinking 고정 템플릿 문제를 개선한 최종 adapter
@@ -269,6 +326,7 @@ split_adapters_tuning_2/
 | 최종 서비스 연동 | `split_adapters_tuning_2/qwen2.5-3b-*` |
 | 1.5B 경량 모델 테스트 | `split_adapters/qwen2.5-1.5b-*` |
 | 1차/2차 성능 비교 | `split_adapters/qwen2.5-3b-*` vs `split_adapters_tuning_2/qwen2.5-3b-*` |
+
 
 
 ---
